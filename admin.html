@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLOBAL-FLOW: ADMIN v3.6.6</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght=400;700&display=swap');
+body { font-family: 'Inter', sans-serif; background-color: #0f172a; overflow-x: hidden; }
+.font-mono { font-family: 'Roboto Mono', monospace; }
+.card-glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.15); }
+.alarm-red { color: #ef4444 !important; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); font-weight: 900; }
+.glow-mini { box-shadow: 0 0 30px rgba(156, 163, 175, 0.2) !important; border-color: #6b7280 !important; }
+.glow-std { box-shadow: 0 0 40px rgba(59, 130, 246, 0.35) !important; border-color: #3b82f6 !important; }
+.glow-vip { box-shadow: 0 0 60px rgba(34, 197, 94, 0.45), inset 0 0 15px rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; }
+.util-red { color: #ef4444 !important; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+.util-orange { color: #f97316 !important; text-shadow: 0 0 10px rgba(249, 115, 22, 0.5); }
+.util-yellow { color: #eab308 !important; text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+.util-green { color: #4ade80 !important; text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
+</head>
+<body class="p-2 md:p-6 text-gray-100">
+
+<div class="max-w-4xl mx-auto">
+    <!-- Banner de estado del Modo Demo / Sandbox -->
+    <div id="demo-banner" class="mb-3 bg-blue-900/40 border border-blue-500/40 p-2 rounded-xl flex justify-between items-center text-xs">
+        <span class="text-blue-300 font-bold flex items-center gap-1">🧪 <span>Entorno de Pruebas Reclutadores:</span> <span id="modo-texto" class="text-white">Modo Producción</span></span>
+        <button onclick="toggleModoDemo()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-2 py-1 rounded text-[10px] uppercase">Cambiar a Sandbox Demo</button>
+    </div>
+
+    <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
+        <h1 class="text-xl font-black text-blue-500 tracking-tighter uppercase italic">Global-Flow <span class="text-white text-[10px] font-light not-italic">v3.6.6</span></h1>
+        <span class="bg-green-500/10 text-green-400 text-[8px] px-2 py-1 rounded border border-green-500/20 font-bold uppercase italic">Profit Guardian + BCV Sync</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <div class="lg:col-span-4 space-y-3">
+            <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 card-glow">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-[9px] font-bold text-yellow-500 uppercase tracking-widest">Tasas Mercado</h2>
+                    <div class="flex gap-2">
+                        <button onclick="cargarDesdeBD()" class="bg-purple-600 hover:bg-purple-500 text-white text-[8px] font-black px-2 py-1 rounded-md transition-all shadow-lg uppercase border border-purple-500/50">
+                            📥 Extraer BD
+                        </button>
+                        <button id="btn-actualizar" onclick="fetchTasas()" class="bg-blue-600 hover:bg-blue-500 text-white text-[8px] font-black px-2 py-1 rounded-md transition-all shadow-lg uppercase border border-blue-500/50">
+                            <span id="btn-text">🔄 Sync API</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-700">
+                        <label class="text-[8px] text-gray-500 uppercase font-bold block mb-1 text-center">USDT (PEN)</label>
+                        <input type="number" id="tasa-pen-usdt" step="0.001" oninput="calcularTodo()" class="w-full bg-transparent text-sm md:text-base font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-purple-500/20">
+                        <label class="text-[8px] text-purple-400 uppercase font-bold block mb-1 text-center italic">Cambista</label>
+                        <input type="number" id="input-usd-pen-tasa" step="0.001" oninput="calcularTodo()" class="w-full bg-transparent text-sm md:text-base font-mono font-bold text-purple-300 outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-green-500/20">
+                        <label class="text-[8px] text-green-500 uppercase font-bold block mb-1 text-center italic">P2P (VES)</label>
+                        <input type="number" id="tasa-usdt-ves" step="0.01" oninput="calcularTodo()" class="w-full bg-transparent text-sm md:text-base font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-orange-500/10">
+                        <label class="text-[8px] text-orange-400 uppercase font-bold block mb-1 text-center">Ref BCV</label>
+                        <input type="number" id="tasa-bcv-ves" readonly class="w-full bg-transparent text-sm md:text-base font-mono font-bold text-gray-500 outline-none text-center cursor-not-allowed">
+                    </div>
+                </div>
+                <button onclick="limpiarTodo()" class="w-full mt-2 bg-gray-700/50 hover:bg-red-900/40 text-gray-400 hover:text-white text-[8px] font-bold py-1 rounded transition-all uppercase border border-gray-600/30">
+                    🗑️ Limpiar Memoria
+                </button>
+            </div>
+
+            <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 card-glow mt-3">
+                <h2 class="text-[9px] font-bold text-[#1cd06b] uppercase tracking-widest mb-2 flex items-center gap-1">
+                    <span>⚙️</span> Lógica de Niveles
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
+                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Límite Mini ($)</label>
+                        <input type="number" id="limite-mini" value="35" oninput="calcularTodo()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
+                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Factor Mini</label>
+                        <input type="number" id="factor-mini" value="0.965" step="0.001" oninput="calcularTodo()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-blue-500/30">
+                        <label class="text-[8px] text-blue-300 uppercase font-bold block mb-1 text-center">Límite Estándar ($)</label>
+                        <input type="number" id="limite-estandar" value="120" oninput="calcularTodo()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-green-500/30">
+                        <label class="text-[8px] text-green-400 uppercase font-bold block mb-1 text-center">Factor VIP</label>
+                        <input type="number" id="factor-vip" value="1.0" step="0.001" oninput="calcularTodo()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600 col-span-2">
+                        <label class="text-[8px] text-white uppercase font-bold block mb-1 text-center">Factor Estándar</label>
+                        <input type="number" id="factor-estandar" value="0.992" step="0.001" oninput="calcularTodo()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 flex flex-col gap-3">
+            <div id="panel-calculadora" class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-xl transition-all duration-500">
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="bg-gray-900 p-2 rounded-lg border border-gray-700 flex flex-col justify-end h-full">
+                        <label class="text-[8px] font-bold text-blue-400 uppercase block mb-1 text-center italic">Costo Operativo Base Soles:</label>
+                        <input type="number" id="input-pen" value="0" onfocus="if(this.value=='0' || this.value=='0.00') this.value=''" onblur="if(this.value=='') { this.value='0'; calcularTodo('pen'); }" oninput="calcularTodo('pen')" class="w-full bg-transparent text-lg font-bold text-white outline-none text-center mt-auto">
+                    </div>
+                    <div class="bg-gray-900 p-2 rounded-lg border border-blue-500/30 flex flex-col justify-end h-full">
+                        <label class="text-[8px] font-bold text-blue-300 uppercase block mb-1 text-center italic">Equivalencia Dólar Mercado P2P:</label>
+                        <input type="number" id="input-usd" value="0" onfocus="if(this.value=='0' || this.value=='0.00') this.value=''" onblur="if(this.value=='') { this.value='0'; calcularTodo('usd'); }" oninput="calcularTodo('usd')" class="w-full bg-transparent text-lg font-bold text-blue-200 outline-none text-center mt-auto">
+                    </div>
+                    <div class="bg-gray-900 p-2 rounded-lg border border-gray-700 flex flex-col justify-end h-full">
+                        <label class="text-[8px] font-bold text-gray-500 uppercase block mb-1 text-center italic">Margen %</label>
+                        <input type="number" id="margen-input" value="5" oninput="calcularTodo()" class="w-full bg-transparent text-lg font-bold text-white outline-none text-center mt-auto">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2 border-t border-gray-700 pt-4">
+                    <div class="bg-gray-900 p-2 rounded-lg border border-gray-700 flex flex-col justify-end h-full text-center">
+                        <p class="text-[7px] leading-tight text-yellow-500 uppercase font-bold mb-1">Costo de Reposicion (USDT):</p>
+                        <input type="number" id="compra-binance" value="0" onfocus="if(this.value=='0' || this.value=='0.00') this.value=''" onblur="if(this.value=='') { this.value='0'; calcularTodo('usdt'); }" oninput="calcularTodo('usdt')" class="w-full bg-transparent text-xs font-bold text-yellow-500 font-mono text-center outline-none mt-auto">
+                    </div>
+                    <div class="bg-gray-900 p-2 rounded-lg border border-gray-700 flex flex-col justify-end h-full text-center">
+                        <p class="text-[7px] leading-tight text-orange-400 uppercase font-bold mb-1">Equivalencia Dólar Oficial BCV</p>
+                        <input type="number" id="destino-usd-bcv" value="0" onfocus="if(this.value=='0' || this.value=='0.00') this.value=''" onblur="if(this.value=='') { this.value='0'; calcularTodo('destino'); }" oninput="calcularTodo('destino')" class="w-full bg-transparent text-xs font-bold text-white font-mono text-center outline-none mt-auto">
+                    </div>
+                    <div id="envio-ves-wrapper" class="bg-gray-900 p-2 rounded-lg border border-gray-700 transition-all duration-500 flex flex-col justify-end h-full text-center relative">
+                        <p class="text-[7px] leading-tight text-blue-400 uppercase font-bold flex justify-center items-center gap-1 mb-1">BENEFICIARIO RECIBE VZLA <span id="badge-admin-nivel" class="hidden px-1 rounded text-[6px] text-white"></span></p>
+                        <input type="number" id="envio-ves" value="0" onfocus="if(this.value=='0' || this.value=='0.00') this.value=''" onblur="if(this.value=='') { this.value='0'; calcularTodo('ves'); }" oninput="calcularTodo('ves')" class="w-full bg-transparent text-xs font-bold text-blue-400 font-mono text-center outline-none mt-auto">
+                    </div>
+                    <div class="bg-gray-900 p-2 rounded-lg border border-gray-700 flex flex-col justify-end h-full text-center">
+                        <p class="text-[8px] text-green-500 uppercase font-bold mb-1">Utilidad</p>
+                        <p id="ganancia-soles" class="text-xs font-bold font-mono transition-all duration-300 text-green-400 mt-auto">0.00 PEN</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-700 to-blue-900 p-4 rounded-xl shadow-2xl flex flex-col items-center gap-3">
+                <div class="text-center">
+                    <p class="text-blue-200 text-[8px] font-bold uppercase tracking-widest flex justify-center items-center gap-1">Tasa Venta Publicada <span id="badge-admin-nivel-tasa" class="hidden px-1 rounded text-[7px] text-white"></span></p>
+                    <p id="tasa-final-calc" class="text-3xl font-black text-white italic tracking-tighter">0.00</p>
+                </div>
+
+                <button onclick="publicarTasa()" class="btn-whatsapp w-full max-w-[200px] bg-white text-blue-700 font-black py-2 rounded-lg hover:scale-105 transition-all uppercase text-[10px] shadow-xl border-b-4 border-blue-950 active:border-b-0">🚀 Actualizar Nube</button>
+
+                <div class="w-full bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <span class="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        <p class="text-white text-[8px] font-bold uppercase tracking-widest opacity-70">Estado en Nube</p>
+                    </div>
+                    <p id="tasa-en-nube" class="text-xl font-black text-white font-mono leading-none">---</p>
+                    <div class="flex justify-center gap-3 text-[9px] font-bold font-mono text-blue-300 mt-2">
+                        <span id="nube-pen" title="Costo PEN">🇵🇪 0.00</span>
+                        <span id="nube-ves" title="P2P VES">🇻🇪 0.00</span>
+                        <span id="nube-bcv" title="BCV Oficial" class="text-orange-300">🇻🇪 BCV 0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCy7b3l4fHls5hxgMKYFSKOP3rkSrCegPM",
+    authDomain: "remesas-flow.firebaseapp.com",
+    projectId: "remesas-flow",
+    appId: "1:305454008976:web:c712e0603f124c68ed2615"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Iniciar sesión automática de fondo para habilitar permisos de escritura seguros
+signInWithEmailAndPassword(auth, "demo@remesas.com", "Demo123456").catch(() => {});
+
+let coleccionDestino = "configuracion";
+let datosFirebase = {}; 
+
+let unsubscribe = escudharDocumento("configuracion");
+
+function escudharDocumento(coleccion) {
+    return onSnapshot(doc(db, coleccion, "tasas"), (docSnap) => {
+        if (docSnap.exists()) {
+            datosFirebase = docSnap.data();
+            let tp = parseFloat(datosFirebase.tasa_publica);
+            document.getElementById('tasa-en-nube').innerText = !isNaN(tp) ? tp.toFixed(2) : "---";
+            
+            let p = parseFloat(datosFirebase.pen_ref);
+            document.getElementById('nube-pen').innerText = "🇵🇪 " + (!isNaN(p) ? p.toFixed(2) : "0.00");
+            
+            let v = parseFloat(datosFirebase.ves_ref);
+            document.getElementById('nube-ves').innerText = "🇻🇪 " + (!isNaN(v) ? v.toFixed(2) : "0.00");
+            
+            let b = parseFloat(datosFirebase.bcv_ref);
+            document.getElementById('nube-bcv').innerText = "🇻🇪 BCV " + (!isNaN(b) ? b.toFixed(2) : "0.00");
+        }
+    });
+}
+
+window.toggleModoDemo = function() {
+    if (unsubscribe) unsubscribe();
+    const texto = document.getElementById('modo-texto');
+    if (coleccionDestino === "configuracion") {
+        coleccionDestino = "demo_sandbox";
+        texto.innerText = "Modo Sandbox (Demostración Reclutadores)";
+        texto.className = "text-yellow-400 font-bold";
+    } else {
+        coleccionDestino = "configuracion";
+        texto.innerText = "Modo Producción";
+        texto.className = "text-white font-bold";
+    }
+    unsubscribe = escudharDocumento(coleccionDestino);
+};
+
+window.cargarDesdeBD = function() {
+    if (Object.keys(datosFirebase).length === 0) {
+        alert("Aún no hay datos guardados en la Nube o la conexión está fallando.");
+        return;
+    }
+    if(datosFirebase.pen_ref) document.getElementById('tasa-pen-usdt').value = datosFirebase.pen_ref;
+    if(datosFirebase.ves_ref) document.getElementById('tasa-usdt-ves').value = datosFirebase.ves_ref;
+    if(datosFirebase.bcv_ref) document.getElementById('tasa-bcv-ves').value = datosFirebase.bcv_ref;
+    if(datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
+    
+    if(datosFirebase.limite_mini) document.getElementById('limite-mini').value = datosFirebase.limite_mini;
+    if(datosFirebase.factor_mini) document.getElementById('factor-mini').value = datosFirebase.factor_mini;
+    if(datosFirebase.limite_estandar) document.getElementById('limite-estandar').value = datosFirebase.limite_estandar;
+    if(datosFirebase.factor_estandar) document.getElementById('factor-estandar').value = datosFirebase.factor_estandar;
+    if(datosFirebase.factor_vip) document.getElementById('factor-vip').value = datosFirebase.factor_vip;
+
+    calcularTodo();
+};
+
+window.limpiarTodo = function() {
+    ['input-pen', 'input-usd', 'compra-binance', 'envio-ves', 'destino-usd-bcv'].forEach(id => {
+        document.getElementById(id).value = '0';
+    });
+    
+    const disp = document.getElementById('ganancia-soles');
+    disp.innerText = '0.00 PEN';
+    disp.classList.remove('util-red', 'util-orange', 'util-yellow', 'util-green');
+    disp.classList.add('text-green-400');
+    
+    const panelCalc = document.getElementById('panel-calculadora');
+    panelCalc.classList.remove('glow-mini', 'glow-std', 'glow-vip');
+    panelCalc.classList.add('border-gray-700');
+
+    const wrapperVes = document.getElementById('envio-ves-wrapper');
+    wrapperVes.classList.remove('glow-mini', 'glow-std', 'glow-vip');
+    wrapperVes.classList.add('border-gray-700');
+    
+    document.getElementById('badge-admin-nivel').classList.add('hidden');
+    document.getElementById('badge-admin-nivel-tasa').classList.add('hidden');
+    document.getElementById('tasa-final-calc').innerText = "0.00";
+};
+
+window.fetchTasas = async function() {
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "⏳...";
+    try {
+        const p1 = fetch('https://api.exchangerate-api.com/v4/latest/USD').then(r => r.json()).then(d => {
+            document.getElementById('tasa-pen-usdt').value = (d.rates.PEN + 0.015).toFixed(3);
+            document.getElementById('input-usd-pen-tasa').value = (d.rates.PEN - 0.01).toFixed(2);
+        });
+
+        const p2 = fetch('https://ve.dolarapi.com/v1/dolares/paralelo').then(r => r.json()).then(d => {
+            document.getElementById('tasa-usdt-ves').value = (d.promedio * 1.018).toFixed(2);
+        });
+
+        const p3 = fetch('https://ve.dolarapi.com/v1/dolares/oficial').then(r => r.json()).then(d => {
+            document.getElementById('tasa-bcv-ves').value = d.promedio.toFixed(2);
+        });
+
+        await Promise.all([p1, p2, p3]);
+        calcularTodo();
+        btnText.innerText = "✅";
+    } catch (e) { 
+        console.error(e);
+        btnText.innerText = "❌"; 
+    }
+    setTimeout(() => btnText.innerText = "🔄 Sync API", 2000);
+};
+
+window.calcularTodo = function(origen = 'pen') {
+    const tasaPenUsdt = parseFloat(document.getElementById('tasa-pen-usdt').value) || 0;
+    const tasaUsdPenCambista = parseFloat(document.getElementById('input-usd-pen-tasa').value) || 1;
+    const tasaUsdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 0;
+    const tasaBcv = parseFloat(document.getElementById('tasa-bcv-ves').value) || 0;
+    const margenPct = parseFloat(document.getElementById('margen-input').value) / 100 || 0;
+
+    const limMini = parseFloat(document.getElementById('limite-mini').value) || 35;
+    const facMini = parseFloat(document.getElementById('factor-mini').value) || 0.965;
+    const limStd = parseFloat(document.getElementById('limite-estandar').value) || 120;
+    const facStd = parseFloat(document.getElementById('factor-estandar').value) || 0.992;
+    const facVip = parseFloat(document.getElementById('factor-vip').value) || 1.0;
+
+    const tasaCruzada = tasaUsdtVes / (tasaPenUsdt || 1);
+    const tasaBaseCliente = tasaCruzada * (1 - margenPct);
+
+    let soles = 0, eqUSD = 0;
+    let vesEntrada = 0, usdtEntrada = 0, destEntrada = 0;
+
+    if (origen === 'usd') {
+        eqUSD = parseFloat(document.getElementById('input-usd').value) || 0;
+    } else if (origen === 'pen') {
+        soles = parseFloat(document.getElementById('input-pen').value) || 0;
+        eqUSD = soles / tasaUsdPenCambista;
+    } else if (origen === 'ves') {
+        vesEntrada = parseFloat(document.getElementById('envio-ves').value) || 0;
+        eqUSD = (vesEntrada / tasaBaseCliente) / tasaUsdPenCambista;
+    } else if (origen === 'usdt') {
+        usdtEntrada = parseFloat(document.getElementById('compra-binance').value) || 0;
+        eqUSD = ((usdtEntrada * tasaUsdtVes) / tasaBaseCliente) / tasaUsdPenCambista;
+    } else if (origen === 'destino') {
+        destEntrada = parseFloat(document.getElementById('destino-usd-bcv').value) || 0;
+        eqUSD = ((destEntrada * tasaBcv) / tasaBaseCliente) / tasaUsdPenCambista;
+    }
+
+    let factorActual = facStd;
+    if (eqUSD > 0 && eqUSD < limMini) { factorActual = facMini; }
+    else if (eqUSD >= limStd) { factorActual = facVip; }
+
+    const tasaClienteAplicada = tasaBaseCliente * factorActual;
+    document.getElementById('tasa-final-calc').innerText = tasaClienteAplicada.toFixed(2);
+
+    const badge = document.getElementById('badge-admin-nivel');
+    const badgeTasa = document.getElementById('badge-admin-nivel-tasa');
+    const panelCalc = document.getElementById('panel-calculadora');
+    const wrapperVes = document.getElementById('envio-ves-wrapper');
+
+    panelCalc.classList.remove('glow-mini', 'glow-std', 'glow-vip');
+    wrapperVes.classList.remove('glow-mini', 'glow-std', 'glow-vip', 'border-gray-700');
+    
+    if (eqUSD > 0) {
+        badge.classList.remove('hidden');
+        badgeTasa.classList.remove('hidden');
+        panelCalc.classList.remove('border-gray-700'); 
+        
+        if (factorActual === facMini) {
+            badge.innerText = 'MINI'; badge.className = 'px-1 rounded text-[6px] text-white bg-gray-600';
+            badgeTasa.innerText = 'MINI'; badgeTasa.className = 'px-1 rounded text-[7px] text-white bg-gray-600';
+            panelCalc.classList.add('glow-mini');
+            wrapperVes.classList.add('glow-mini');
+        } else if (factorActual === facVip) {
+            badge.innerText = 'VIP'; badge.className = 'px-1 rounded text-[6px] text-[#0f141e] bg-[#1cd06b]';
+            badgeTasa.innerText = 'VIP'; badgeTasa.className = 'px-1 rounded text-[7px] text-[#0f141e] bg-[#1cd06b]';
+            panelCalc.classList.add('glow-vip');
+            wrapperVes.classList.add('glow-vip');
+        } else {
+            badge.innerText = 'STD'; badge.className = 'px-1 rounded text-[6px] text-white bg-blue-600';
+            badgeTasa.innerText = 'STD'; badgeTasa.className = 'px-1 rounded text-[7px] text-white bg-blue-600';
+            panelCalc.classList.add('glow-std');
+            wrapperVes.classList.add('glow-std');
+        }
+    } else {
+        badge.classList.add('hidden');
+        badgeTasa.classList.add('hidden');
+        panelCalc.classList.add('border-gray-700');
+        wrapperVes.classList.add('border-gray-700');
+        document.getElementById('tasa-final-calc').innerText = (tasaBaseCliente * facStd).toFixed(2);
+    }
+
+    if (origen === 'usd') {
+        soles = eqUSD * tasaUsdPenCambista;
+        document.getElementById('input-pen').value = soles.toFixed(2);
+    } else if (origen === 'pen') {
+        document.getElementById('input-usd').value = eqUSD.toFixed(2);
+    } else if (origen === 'ves') {
+        soles = vesEntrada / (tasaClienteAplicada || 1);
+        document.getElementById('input-pen').value = soles.toFixed(2);
+        document.getElementById('input-usd').value = (soles / tasaUsdPenCambista).toFixed(2);
+    } else if (origen === 'usdt') {
+        const ves = usdtEntrada * tasaUsdtVes;
+        soles = ves / (tasaClienteAplicada || 1);
+        document.getElementById('input-pen').value = soles.toFixed(2);
+        document.getElementById('input-usd').value = (soles / tasaUsdPenCambista).toFixed(2);
+    } else if (origen === 'destino') {
+        const ves = destEntrada * tasaBcv;
+        soles = ves / (tasaClienteAplicada || 1);
+        document.getElementById('input-pen').value = soles.toFixed(2);
+        document.getElementById('input-usd').value = (soles / tasaUsdPenCambista).toFixed(2);
+    }
+
+    soles = parseFloat(document.getElementById('input-pen').value) || 0;
+    const vesFinal = soles * tasaClienteAplicada;
+    const usdtFinal = vesFinal / (tasaUsdtVes || 1);
+    const usdDestinoFinal = vesFinal / (tasaBcv || 1);
+
+    if (origen !== 'usdt') document.getElementById('compra-binance').value = usdtFinal.toFixed(2);
+    if (origen !== 'ves') document.getElementById('envio-ves').value = vesFinal.toFixed(2);
+    if (origen !== 'destino') document.getElementById('destino-usd-bcv').value = usdDestinoFinal.toFixed(2);
+
+    const costoRepo = usdtFinal * tasaPenUsdt;
+    const utilidadFinal = soles - costoRepo;
+    const disp = document.getElementById('ganancia-soles');
+    disp.innerText = utilidadFinal.toFixed(2) + " PEN";
+
+    disp.classList.remove('text-green-400', 'util-red', 'util-orange', 'util-yellow', 'util-green');
+    
+    if (soles <= 0) {
+        disp.classList.add('text-green-400');
+    } else if (utilidadFinal < 5.00) {
+        disp.classList.add('util-red');
+    } else if (utilidadFinal < 12.00) {
+        disp.classList.add('util-orange');
+    } else if (utilidadFinal < 25.00) {
+        disp.classList.add('util-yellow');
+    } else {
+        disp.classList.add('util-green');
+    }
+};
+
+window.publicarTasa = async function() {
+    const tasaPenUsdt = parseFloat(document.getElementById('tasa-pen-usdt').value) || 1;
+    const tasaUsdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 0;
+    const margenPct = parseFloat(document.getElementById('margen-input').value) / 100 || 0;
+    const tasaBaseCliente = (tasaUsdtVes / tasaPenUsdt) * (1 - margenPct);
+
+    const facMini = parseFloat(document.getElementById('factor-mini').value) || 0.965;
+    const facStd = parseFloat(document.getElementById('factor-estandar').value) || 0.992;
+    const facVip = parseFloat(document.getElementById('factor-vip').value) || 1.0;
+
+    try {
+        await setDoc(doc(db, coleccionDestino, "tasas"), {
+            tasa_p2p_mini: parseFloat((tasaBaseCliente * facMini).toFixed(2)),
+            tasa_p2p_std: parseFloat((tasaBaseCliente * facStd).toFixed(2)),
+            tasa_p2p_vip: parseFloat((tasaBaseCliente * facVip).toFixed(2)),
+            
+            limite_mini: parseFloat(document.getElementById('limite-mini').value),
+            limite_estandar: parseFloat(document.getElementById('limite-estandar').value),
+            tasa_cambista: parseFloat(document.getElementById('input-usd-pen-tasa').value),
+            bcv_ref: parseFloat(document.getElementById('tasa-bcv-ves').value),
+
+            tasa_publica: (tasaBaseCliente * facStd).toFixed(2),
+            pen_ref: document.getElementById('tasa-pen-usdt').value,
+            ves_ref: document.getElementById('tasa-usdt-ves').value,
+            factor_mini: facMini,
+            factor_estandar: facStd,
+            factor_vip: facVip,
+            fecha: new Date().toISOString()
+        });
+        alert(`✅ Tasas sincronizadas con éxito en el nodo [${coleccionDestino}].`);
+    } catch (e) { 
+        alert("❌ Error de permisos o conexión al publicar en la nube."); 
+    }
+};
+</script>
+</body>
+</html>
