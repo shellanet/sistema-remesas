@@ -103,6 +103,22 @@
         #incentivo-text { font-size:11px !important; line-height:1.4; }
         .nivel-card { transition:transform .2s ease; }
         .nivel-card:hover { transform:translateY(-2px); }
+        /* ---- Fondo con imagen de marca (desenfocada) ---- */
+        body::before {
+            content:'';
+            position:fixed;
+            inset:0;
+            z-index:-1;
+            background:#0f141e url('fondo-global-flow.jpg') center / cover no-repeat;
+        }
+        body::after {
+            content:'';
+            position:fixed;
+            inset:0;
+            z-index:-1;
+            pointer-events:none;
+            background:linear-gradient(to bottom, rgba(15,20,30,.15), rgba(15,20,30,.55));
+        }
         .bloque-resultado { background:linear-gradient(135deg, rgba(28,208,107,.10), rgba(59,130,246,.06)); border:1px solid rgba(28,208,107,.35); }
     </style>
 </head>
@@ -114,13 +130,8 @@
     <!-- BIENVENIDA -->
     <div class="mb-5 text-center relative">
         <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-40 h-24 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <h1 class="relative text-2xl font-black text-white uppercase tracking-widest italic">
-            ✨ <span class="text-blue-500">Global-Flow</span> ✨
-        </h1>
-        <p class="relative text-base font-bold text-white mt-2">
-            Envía dinero a Venezuela con la mejor tasa 💚
-        </p>
-        <p class="relative text-xs text-gray-400 mt-1 leading-relaxed px-4">
+        <img src="banner-global-flow.jpg" width="1000" height="559" alt="Global Flow: tus remesas de Perú a Venezuela, rápidas y seguras" class="relative w-full h-auto rounded-3xl border border-gray-800 shadow-2xl">
+        <p class="relative text-xs text-gray-300 mt-3 leading-relaxed px-4">
             Sistema dinámico protegido contra pérdidas y variaciones del mercado.
         </p>
     </div>
