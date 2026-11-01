@@ -263,6 +263,10 @@
         <button onclick="solicitarCambio()" class="btn-action w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-[#0f141e] uppercase tracking-widest text-sm relative z-10">
             🚀 ¡Cambiar ahora!
         </button>
+
+        <button id="btn-captura" onclick="capturarTasa()" class="w-full mt-3 py-3 rounded-xl flex items-center justify-center gap-2 font-black text-[#1cd06b] uppercase tracking-widest text-xs border-2 border-[#1cd06b]/60 hover:bg-[#1cd06b]/10 transition relative z-10">
+            📸 Capturar y compartir tasa
+        </button>
     </div>
 </div>
 
@@ -462,5 +466,248 @@ window.solicitarCambio = function(){
     window.location.href = `https://wa.me/51960205059?text=${encodeURIComponent(txt)}`;
 };
 </script>
+
+<!-- ===== CAPTURA Y COMPARTIR TASA (bloque independiente) ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+    const $ = (id) => document.getElementById(id);
+    let tarjeta = null;
+    let urlActual = null;
+
+    function toast(msg){
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a202c;color:#fff;border:1px solid #1cd06b;padding:12px 18px;border-radius:14px;font:700 13px Inter,sans-serif;z-index:10000;box-shadow:0 8px 30px rgba(0,0,0,.6);max-width:90%;text-align:center;';
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    function datosActuales(){
+        const monto = parseFloat($('calc-input').value) || 0;
+        const simbolo = $('input-symbol').innerText.trim();
+        const montoTxt = monto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const bs = $('calc-result').innerText.trim().split(' ')[0];
+        const tasa = $('tasa-display').innerText.trim();
+        const colorTasa = $('tasa-display').style.color || '#ffffff';
+        const badge = $('badge-nivel');
+        const nivel = badge.classList.contains('hidden') ? '' : badge.innerText.trim();
+        const tipo = $('tipo-bcv').className.includes('bg-orange-500') ? 'BCV' : 'Paralelo';
+        const solesBox = $('pago-soles-container');
+        const soles = (solesBox && !solesBox.classList.contains('hidden')) ? $('pago-soles-display').innerText.trim() : '';
+        const fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+        return { monto, simbolo, montoTxt, bs, tasa, colorTasa, nivel, tipo, soles, fecha };
+    }
+
+    function crearTarjeta(){
+        if(tarjeta) return tarjeta;
+        tarjeta = document.createElement('div');
+        tarjeta.id = 'share-card';
+        tarjeta.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;padding:26px 22px;box-sizing:border-box;background:#0f141e;color:#f3f4f6;font-family:Inter,Arial,sans-serif;';
+        tarjeta.innerHTML = `
+            <div style="text-align:center;margin-bottom:14px;">
+                <div style="font-size:20px;font-weight:900;font-style:italic;letter-spacing:.14em;text-transform:uppercase;">✨ <span style="color:#3b82f6;">Global-Flow</span> ✨</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Tasa inteligente de envío a Venezuela</div>
+            </div>
+            <div style="text-align:center;margin-bottom:14px;">
+                <span data-f="nivel" style="display:none;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;"></span>
+                <div data-f="tasa" style="font-size:56px;line-height:1.05;font-weight:900;font-style:italic;letter-spacing:-.03em;margin-top:8px;">0.00</div>
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Tasa · <span data-f="tipo"></span></div>
+            </div>
+            <div style="background:#111620;border-radius:18px;padding:14px 16px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;">Envías</span>
+                    <span data-f="envio" style="font-size:20px;font-weight:900;"></span>
+                </div>
+                <div data-f="solesRow" style="display:none;justify-content:space-between;align-items:center;margin-top:8px;">
+                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;">Valor en soles</span>
+                    <span data-f="soles" style="font-size:16px;font-weight:900;color:#fbbf24;"></span>
+                </div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(28,208,107,.14),rgba(59,130,246,.08));border:1px solid rgba(28,208,107,.45);border-radius:18px;padding:16px;text-align:center;">
+                <div style="font-size:12px;color:#1cd06b;font-weight:900;text-transform:uppercase;letter-spacing:.06em;">Recibes en Venezuela</div>
+                <div style="font-size:40px;line-height:1.1;font-weight:900;letter-spacing:-.03em;margin-top:6px;"><span data-f="bs"></span> <span style="font-size:18px;color:#9ca3af;font-style:italic;font-weight:700;">Bs</span></div>
+            </div>
+            <div style="text-align:center;margin-top:14px;font-size:10px;color:#6b7280;">
+                <div data-f="fecha"></div>
+                <div style="margin-top:2px;">Tasa sujeta a variación del mercado</div>
+            </div>`;
+        document.body.appendChild(tarjeta);
+        return tarjeta;
+    }
+
+    function llenarTarjeta(card, d){
+        const set = (k, v) => { card.querySelector('[data-f="' + k + '"]').textContent = v; };
+        set('tasa', d.tasa);
+        card.querySelector('[data-f="tasa"]').style.color = d.colorTasa;
+        set('tipo', d.tipo);
+        set('envio', d.simbolo + ' ' + d.montoTxt);
+        set('bs', d.bs);
+        set('fecha', d.fecha);
+
+        const nv = card.querySelector('[data-f="nivel"]');
+        if(d.nivel){
+            nv.style.display = 'inline-block';
+            nv.textContent = d.nivel;
+            const n = d.nivel.toUpperCase();
+            if(n.includes('MINI')){ nv.style.background = '#374151'; nv.style.color = '#d1d5db'; }
+            else if(n.includes('VIP')){ nv.style.background = '#1cd06b'; nv.style.color = '#0f141e'; }
+            else { nv.style.background = '#2563eb'; nv.style.color = '#ffffff'; }
+        } else {
+            nv.style.display = 'none';
+        }
+
+        const sr = card.querySelector('[data-f="solesRow"]');
+        if(d.soles){ sr.style.display = 'flex'; set('soles', d.soles); }
+        else { sr.style.display = 'none'; }
+    }
+
+    function textoCompartir(d){
+        let t = '💎 *GLOBAL-FLOW*\n';
+        if(d.nivel) t += '🌟 Nivel: ' + d.nivel + '\n';
+        t += '💵 Envías: ' + d.simbolo + ' ' + d.montoTxt + '\n';
+        t += '📊 Tasa (' + d.tipo + '): ' + d.tasa + ' Bs\n';
+        t += '💰 *Recibes en Venezuela: ' + d.bs + ' Bs*\n';
+        t += '🕒 ' + d.fecha + '\n';
+        if(location.protocol.indexOf('http') === 0){ t += '\nCotiza tú también: ' + location.href.split('#')[0]; }
+        return t;
+    }
+
+    function cerrarModal(){
+        const m = $('modal-captura');
+        if(m) m.remove();
+        if(urlActual){ URL.revokeObjectURL(urlActual); urlActual = null; }
+    }
+
+    function estiloBtn(bg, color){
+        return 'padding:12px 8px;border-radius:12px;border:0;font:900 12px Inter,sans-serif;text-transform:uppercase;cursor:pointer;background:' + bg + ';color:' + color + ';';
+    }
+
+    function mostrarModal(blob, texto){
+        cerrarModal();
+        urlActual = URL.createObjectURL(blob);
+        const file = new File([blob], 'global-flow-tasa.png', { type: 'image/png' });
+        const puedeCompartirArchivo = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+        const puedeCopiar = !!(navigator.clipboard && window.ClipboardItem);
+
+        const ov = document.createElement('div');
+        ov.id = 'modal-captura';
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;';
+        ov.addEventListener('click', (e) => { if(e.target === ov) cerrarModal(); });
+
+        const panel = document.createElement('div');
+        panel.style.cssText = 'width:100%;max-width:380px;background:#1a202c;border:1px solid #1f2937;border-radius:24px;padding:16px;margin:auto;font-family:Inter,sans-serif;';
+
+        const head = document.createElement('div');
+        head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+        head.innerHTML = '<span style="font-size:12px;font-weight:900;color:#1cd06b;text-transform:uppercase;">📸 Tu captura está lista</span>';
+        const x = document.createElement('button');
+        x.textContent = '✕';
+        x.style.cssText = 'background:none;border:0;color:#9ca3af;font-size:18px;cursor:pointer;';
+        x.onclick = cerrarModal;
+        head.appendChild(x);
+
+        const img = document.createElement('img');
+        img.src = urlActual;
+        img.alt = 'Captura de la tasa Global-Flow';
+        img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;';
+
+        if(puedeCompartirArchivo){
+            const b = document.createElement('button');
+            b.textContent = '📤 Compartir imagen';
+            b.style.cssText = estiloBtn('#1cd06b', '#0f141e') + 'grid-column:1 / -1;';
+            b.onclick = async () => {
+                try { await navigator.share({ files: [file], title: 'Global-Flow', text: texto }); }
+                catch(e){ if(e.name !== 'AbortError') toast('No se pudo abrir el menú de compartir'); }
+            };
+            grid.appendChild(b);
+        }
+
+        const wa = document.createElement('button');
+        wa.textContent = '💬 WhatsApp (texto)';
+        wa.style.cssText = estiloBtn('#25d366', '#0f141e');
+        wa.onclick = () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank'); };
+        grid.appendChild(wa);
+
+        const dl = document.createElement('button');
+        dl.textContent = '⬇️ Descargar';
+        dl.style.cssText = estiloBtn('#2563eb', '#ffffff');
+        dl.onclick = () => {
+            const a = document.createElement('a');
+            a.href = urlActual;
+            a.download = 'global-flow-tasa.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        };
+        grid.appendChild(dl);
+
+        if(puedeCopiar){
+            const cp = document.createElement('button');
+            cp.textContent = '📋 Copiar imagen';
+            cp.style.cssText = estiloBtn('#374151', '#ffffff') + 'grid-column:1 / -1;';
+            cp.onclick = async () => {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    toast('Imagen copiada. Pégala en tu chat o red social.');
+                } catch(e){ toast('No se pudo copiar la imagen'); }
+            };
+            grid.appendChild(cp);
+        }
+
+        const nota = document.createElement('p');
+        nota.style.cssText = 'font-size:10px;color:#6b7280;text-align:center;margin-top:10px;line-height:1.4;';
+        nota.textContent = puedeCompartirArchivo
+            ? 'Con «Compartir imagen» elige WhatsApp, Instagram, Facebook, Telegram u otra app.'
+            : 'Descarga o copia la imagen y adjúntala en tu red social. El botón de WhatsApp envía solo el texto.';
+
+        panel.appendChild(head);
+        panel.appendChild(img);
+        panel.appendChild(grid);
+        panel.appendChild(nota);
+        ov.appendChild(panel);
+        document.body.appendChild(ov);
+    }
+
+    window.capturarTasa = async function(){
+        const d = datosActuales();
+        if(!(d.monto > 0)){ toast('Ingresa un monto para generar la captura'); return; }
+        if(typeof html2canvas === 'undefined'){ toast('No se pudo cargar el generador de capturas. Revisa tu conexión.'); return; }
+
+        const btn = $('btn-captura');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Generando...';
+        try{
+            const card = crearTarjeta();
+            llenarTarjeta(card, d);
+            if(document.fonts && document.fonts.ready){ await document.fonts.ready; }
+            const canvas = await html2canvas(card, {
+                backgroundColor: '#0f141e',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                onclone: (doc) => {
+                    const c = doc.getElementById('share-card');
+                    if(c){ c.style.left = '0'; c.style.top = '0'; }
+                }
+            });
+            const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+            if(!blob) throw new Error('No se generó la imagen');
+            mostrarModal(blob, textoCompartir(d));
+        } catch(e){
+            console.error(e);
+            toast('No se pudo generar la captura. Intenta de nuevo.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    };
+})();
+</script>
+
 </body>
 </html>
