@@ -461,7 +461,7 @@ window.calcularTodo = function(origen = 'pen') {
         panelCalc.classList.add('border-gray-700'); wrapperVes.classList.add('border-gray-700');
     }
 
-    const vesFinal = soles * datosTasa.tasa;
+    const vesFinal = Math.round(soles * datosTasa.tasa); // Bs exactos: sin decimales
     const usdtFinal = vesFinal / tasaUsdtVes;
     const usdDestinoFinal = vesFinal / tasaBcv;
 
