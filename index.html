@@ -6,7 +6,7 @@
     <title>GLOBAL-FLOW: APP CLIENTE v4.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght=400;700&family=Inter:wght=400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
 
         body{
             font-family:'Inter',sans-serif;
@@ -95,98 +95,77 @@
             50%{transform:scale(1.01);}
             100%{transform:scale(1);}
         }
+
+        /* ---- Ajustes visuales de la prueba ---- */
+        #btn-pen, #btn-usd { font-size:12px !important; padding:8px 14px !important; }
+        #tipo-p2p, #tipo-bcv { font-size:11px !important; padding:7px 14px !important; }
+        #badge-nivel { font-size:11px !important; }
+        #incentivo-text { font-size:11px !important; line-height:1.4; }
+        .nivel-card { transition:transform .2s ease; }
+        .nivel-card:hover { transform:translateY(-2px); }
+        .bloque-resultado { background:linear-gradient(135deg, rgba(28,208,107,.10), rgba(59,130,246,.06)); border:1px solid rgba(28,208,107,.35); }
     </style>
 </head>
 
 <body class="p-4 md:p-6 text-gray-100 min-h-screen flex flex-col items-center justify-center relative">
 
-<div class="max-w-[400px] w-full relative z-10">
+<div class="max-w-[420px] w-full relative z-10">
 
-    <div class="mb-6 bg-gradient-to-br from-[#111620] via-[#1a202c] to-[#111620] p-6 rounded-3xl border border-gray-800 shadow-2xl relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-green-500/10 rounded-full blur-3xl"></div>
+    <!-- BIENVENIDA -->
+    <div class="mb-5 text-center relative">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-40 h-24 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <h1 class="relative text-2xl font-black text-white uppercase tracking-widest italic">
+            ✨ <span class="text-blue-500">Global-Flow</span> ✨
+        </h1>
+        <p class="relative text-base font-bold text-white mt-2">
+            Envía dinero a Venezuela con la mejor tasa 💚
+        </p>
+        <p class="relative text-xs text-gray-400 mt-1 leading-relaxed px-4">
+            Sistema dinámico protegido contra pérdidas y variaciones del mercado.
+        </p>
+    </div>
 
-        <div class="relative z-10 text-center">
-            <h2 class="text-xl font-black text-white uppercase tracking-widest mb-3 italic">
-                ✨ <span class="text-blue-500">Global-Flow</span> ✨
-            </h2>
-
-            <p class="text-[11px] text-gray-400 mb-5 leading-relaxed px-2">
-                Sistema inteligente:
-                <span class="text-white font-bold">
-                    Sistema dinámico protegido contra pérdidas y variaciones del mercado.
-                </span>
-            </p>
-
-            <div class="space-y-3 mb-6 text-left max-w-[280px] mx-auto">
-                <div class="flex items-start gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
-                    <span class="text-lg">🥉</span>
-                    <div>
-                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-tighter">
-                            Nivel Mini
-                        </p>
-                        <p class="text-[9px] text-gray-500">
-                            Envíos menores a <span id="label-limite-mini">$35</span> USD.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-3 bg-blue-900/20 p-2 rounded-xl border border-blue-800/30">
-                    <span class="text-lg">🥈</span>
-                    <div>
-                        <p class="text-[10px] font-black text-blue-400 uppercase tracking-tighter">
-                            Nivel Estándar
-                        </p>
-                        <p class="text-[9px] text-gray-500">
-                            Tasa preferencial de mercado.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-3 bg-green-900/20 p-2 rounded-xl border border-green-800/40">
-                    <span class="text-lg">🥇</span>
-                    <div>
-                        <p class="text-[10px] font-black text-green-400 uppercase tracking-tighter">
-                            Nivel VIP 🔥
-                        </p>
-                        <p class="text-[9px] text-gray-400">
-                            ¡Nuestra mejor tasa para ti desde <span id="label-limite-estandar">$120</span> USD!
-                        </p>
-                    </div>
-                </div>
+    <!-- NIVELES -->
+    <div class="mb-5">
+        <p class="text-[11px] text-gray-400 font-black uppercase tracking-widest text-center mb-2">
+            Mientras más envías, mejor tasa
+        </p>
+        <div class="grid grid-cols-3 gap-2">
+            <div class="nivel-card bg-gray-900/60 border border-gray-700 rounded-2xl p-3 text-center">
+                <div class="text-2xl mb-1">🥉</div>
+                <p class="text-[11px] font-black text-gray-300 uppercase">Mini</p>
+                <p class="text-[11px] text-gray-400 mt-1 leading-tight">
+                    Menos de <span id="label-limite-mini" class="font-bold text-gray-200">$35</span>
+                </p>
             </div>
 
-            <p class="text-[9px] text-blue-500 font-black animate-bounce mt-2 uppercase">
-                Calcula tu envío abajo ⬇️
-            </p>
+            <div class="nivel-card bg-blue-900/20 border border-blue-800/40 rounded-2xl p-3 text-center">
+                <div class="text-2xl mb-1">🥈</div>
+                <p class="text-[11px] font-black text-blue-400 uppercase">Estándar</p>
+                <p class="text-[11px] text-gray-400 mt-1 leading-tight">
+                    Tasa preferencial
+                </p>
+            </div>
+
+            <div class="nivel-card bg-green-900/20 border border-green-700/50 rounded-2xl p-3 text-center">
+                <div class="text-2xl mb-1">🥇</div>
+                <p class="text-[11px] font-black text-green-400 uppercase">VIP 🔥</p>
+                <p class="text-[11px] text-gray-300 mt-1 leading-tight">
+                    Desde <span id="label-limite-estandar" class="font-bold text-white">$120</span><br>
+                    <span class="text-green-400 font-bold">¡Mejor tasa!</span>
+                </p>
+            </div>
         </div>
     </div>
 
-    <div id="main-card" class="bg-[#1a202c] p-6 rounded-[2.5rem] border border-gray-800 card-base premium-glow relative">
+    <!-- CALCULADORA -->
+    <div id="main-card" class="bg-[#1a202c] p-6 rounded-[2.5rem] border border-gray-800 card-base relative">
         <div id="fireworks-container"></div>
 
-        <div class="text-center mb-6">
-            <div class="flex justify-center items-center gap-2 mb-1">
-                <p class="text-[11px] text-blue-500 font-black uppercase" id="tasa-label">
-                    Tasa Inteligente:
-                </p>
-                <span id="badge-nivel" class="hidden text-[9px] px-2 py-0.5 rounded-full font-black uppercase"></span>
-            </div>
-
-            <div id="tasa-display" class="text-[3.5rem] leading-none font-black text-white italic tracking-tighter mb-2">
-                0.00
-            </div>
-
-            <p class="text-[10px] font-bold text-gray-500 uppercase">
-                REF BCV:
-                <span id="ref-bcv">0.00</span>
-            </p>
-        </div>
-
-        <div class="bg-[#111620] p-5 rounded-[1.5rem] mb-6">
-            <div class="flex justify-between items-center mb-4">
-                <label class="text-[10px] text-gray-400 uppercase font-black">
-                    Monto a enviar
+        <div class="bg-[#111620] p-5 rounded-[1.5rem] mb-5">
+            <div class="flex justify-between items-center mb-3">
+                <label class="text-xs text-gray-300 uppercase font-black">
+                    Tú envías
                 </label>
 
                 <div class="flex flex-col items-end gap-1">
@@ -198,23 +177,9 @@
                             US $
                         </button>
                     </div>
-                    <p id="precio-compra-container" class="hidden text-[8px] font-bold text-blue-400 uppercase">
+                    <p id="precio-compra-container" class="hidden text-[10px] font-bold text-blue-400 uppercase">
                         Precio Venta: <span id="val-precio-compra">0.00</span>
                     </p>
-                </div>
-            </div>
-
-            <div id="selector-tasa-container" class="flex justify-between items-center mb-4 bg-[#0a0f18] p-2 rounded-xl border border-gray-800">
-                <span class="text-[8px] text-gray-500 font-black uppercase ml-1">
-                    Cambio en Ven:
-                </span>
-                <div class="flex gap-1">
-                    <button id="tipo-p2p" onclick="setTipoTasa('P2P')" class="px-2 py-1 text-[8px] font-black rounded-md bg-[#1cd06b] text-[#0f141e] uppercase shadow-[0_0_10px_rgba(28,208,107,0.4)]">
-                        Paralelo
-                    </button>
-                    <button id="tipo-bcv" onclick="setTipoTasa('BCV')" class="px-2 py-1 text-[8px] font-black rounded-md text-gray-500 uppercase">
-                        BCV
-                    </button>
                 </div>
             </div>
 
@@ -229,35 +194,69 @@
                 <p id="incentivo-text" class="text-[9px] font-black uppercase animate-pulse"></p>
             </div>
 
-            <div id="pago-soles-container" class="hidden justify-between items-center mt-4 bg-[#0a0f18] p-3 rounded-xl border border-gray-700">
-                <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+            <div id="pago-soles-container" class="hidden justify-between items-center mt-3 bg-[#0a0f18] p-3 rounded-xl border border-gray-700">
+                <span class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
                     💳 Valor en Soles:
                 </span>
                 <span id="pago-soles-display" class="text-xl font-black text-[#fbbf24]">
                     S/ 0.00
                 </span>
             </div>
+        </div>
 
-            <hr class="border-gray-800 my-5">
+        <!-- RESULTADO -->
+        <div class="bloque-resultado rounded-[1.5rem] p-5 mb-5 text-center">
+            <p class="text-xs text-[#1cd06b] font-black uppercase tracking-wider mb-1">
+                Recibes en Venezuela:
+            </p>
+            <p id="calc-result" class="text-[2.75rem] leading-none font-black text-white tracking-tighter">
+                0.00 <span class="text-xl font-bold text-gray-500 italic">Bs</span>
+            </p>
 
-            <div class="text-center mb-5">
-                <p class="text-[11px] text-[#1cd06b] font-black uppercase mb-1">
-                    Recibes en Venezuela:
-                </p>
-                <p id="calc-result" class="text-[2.5rem] leading-none font-black text-white tracking-tighter">
-                    0.00 <span class="text-xl font-bold text-gray-500 italic">Bs</span>
-                </p>
+            <hr class="border-gray-700/60 my-4">
+
+            <div class="flex justify-between items-center">
+                <div class="text-left">
+                    <div class="flex items-center gap-2 mb-1">
+                        <p class="text-xs text-blue-500 font-black uppercase" id="tasa-label">
+                            Tasa Inteligente:
+                        </p>
+                        <span id="badge-nivel" class="hidden text-[9px] px-2 py-0.5 rounded-full font-black uppercase"></span>
+                    </div>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase">
+                        REF BCV: <span id="ref-bcv">0.00</span>
+                    </p>
+                </div>
+                <div id="tasa-display" class="text-4xl leading-none font-black text-white italic tracking-tighter">
+                    0.00
+                </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-2 divide-x divide-gray-700 text-center">
-                <div class="px-2">
-                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Al Cambio BCV</p>
-                    <p id="calc-usd-bcv" class="text-sm font-black text-orange-400 tracking-tighter">$0.00</p>
-                </div>
-                <div class="px-2">
-                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Al Cambio Paralelo</p>
-                    <p id="calc-usd-p2p" class="text-sm font-black text-blue-400 tracking-tighter">$0.00</p>
-                </div>
+        <!-- TIPO DE CAMBIO -->
+        <div id="selector-tasa-container" class="flex justify-between items-center mb-5 bg-[#0a0f18] p-2.5 rounded-xl border border-gray-800">
+            <span class="text-[11px] text-gray-400 font-black uppercase ml-1">
+                Cambio en Ven:
+            </span>
+            <div class="flex gap-1">
+                <button id="tipo-p2p" onclick="setTipoTasa('P2P')" class="px-2 py-1 text-[8px] font-black rounded-md bg-[#1cd06b] text-[#0f141e] uppercase shadow-[0_0_10px_rgba(28,208,107,0.4)]">
+                    Paralelo
+                </button>
+                <button id="tipo-bcv" onclick="setTipoTasa('BCV')" class="px-2 py-1 text-[8px] font-black rounded-md text-gray-500 uppercase">
+                    BCV
+                </button>
+            </div>
+        </div>
+
+        <!-- EQUIVALENCIAS -->
+        <div class="grid grid-cols-2 divide-x divide-gray-700 text-center mb-6">
+            <div class="px-2">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Al Cambio BCV</p>
+                <p id="calc-usd-bcv" class="text-base font-black text-orange-400 tracking-tighter">$0.00</p>
+            </div>
+            <div class="px-2">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Al Cambio Paralelo</p>
+                <p id="calc-usd-p2p" class="text-base font-black text-blue-400 tracking-tighter">$0.00</p>
             </div>
         </div>
 
@@ -408,6 +407,7 @@ window.calcularCliente = function(){
     }
 
     if(!isFinite(totalBs)) totalBs = 0;
+    totalBs = Math.round(totalBs); // Bs exactos: sin decimales (se muestra ,00)
     document.getElementById('calc-result').innerHTML = `${totalBs.toLocaleString('es-VE',{ minimumFractionDigits:2, maximumFractionDigits:2 })} <span class="text-xl font-bold text-gray-500 italic">Bs</span>`;
 
     const pagoSolesContainer = document.getElementById('pago-soles-container');
