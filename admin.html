@@ -49,7 +49,7 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
                             <button id="btn-actualizar" onclick="window.fetchTasas()" class="bg-blue-600 hover:bg-blue-500 text-white text-[8px] font-black px-2 py-1 rounded-md transition-all shadow-lg uppercase border border-blue-500/50 w-[70px]">
                                 <span id="btn-text">🔄 Sync API</span>
                             </button>
-                            <span id="timer-sync" class="text-[7px] text-gray-400 mt-0.5 font-mono">Auto: 05:00</span>
+                            <span id="timer-sync" class="text-[7px] text-gray-400 mt-0.5 font-mono">Auto: --:--</span>
                         </div>
                     </div>
                 </div>
@@ -83,30 +83,69 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
                 </h2>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
-                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Límite Mini ($)</label>
-                        <input type="number" id="limite-mini" value="35" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Límite Mini (S/)</label>
+                        <input type="number" id="limite-mini-soles" placeholder="—" step="0.01" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <div class="flex items-center justify-center gap-1 mt-1">
+                            <span class="text-[8px] text-gray-500 font-bold uppercase">≈ US $</span>
+                            <input type="number" id="limite-mini" readonly tabindex="-1" placeholder="—" class="w-14 bg-transparent text-[10px] font-mono text-gray-400 outline-none text-center">
+                        </div>
                     </div>
                     <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
                         <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Margen Mini (%)</label>
-                        <input type="number" id="margen-mini" value="7.5" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <input type="number" id="margen-mini" placeholder="—" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
                     </div>
                     <div class="bg-gray-900/40 p-2 rounded-lg border border-blue-500/30">
-                        <label class="text-[8px] text-blue-300 uppercase font-bold block mb-1 text-center">Límite VIP ($)</label>
-                        <input type="number" id="limite-estandar" value="120" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <label class="text-[8px] text-blue-300 uppercase font-bold block mb-1 text-center">Límite VIP (S/)</label>
+                        <input type="number" id="limite-estandar-soles" placeholder="—" step="0.01" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <div class="flex items-center justify-center gap-1 mt-1">
+                            <span class="text-[8px] text-gray-500 font-bold uppercase">≈ US $</span>
+                            <input type="number" id="limite-estandar" readonly tabindex="-1" placeholder="—" class="w-14 bg-transparent text-[10px] font-mono text-gray-400 outline-none text-center">
+                        </div>
                     </div>
                     <div class="bg-gray-900/40 p-2 rounded-lg border border-green-500/30">
                         <label class="text-[8px] text-green-400 uppercase font-bold block mb-1 text-center">Margen VIP (%)</label>
-                        <input type="number" id="margen-vip" value="3.5" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <input type="number" id="margen-vip" placeholder="—" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
                     </div>
                     <div class="bg-gray-900/40 p-2 rounded-lg border border-blue-500/50 col-span-2">
                         <label class="text-[8px] text-blue-400 uppercase font-bold block mb-1 text-center">Margen Estándar (%)</label>
-                        <input type="number" id="margen-estandar" value="5.0" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                        <input type="number" id="margen-estandar" placeholder="—" step="0.1" oninput="window.calcularTodo('pen')" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
                     </div>
                 </div>
+                <p id="aviso-parametros" class="text-[8px] text-gray-400 mt-2 text-center leading-tight">Cargando parámetros desde la base de datos…</p>
                 
                 <button onclick="window.limpiarTodo()" class="w-full mt-3 bg-gray-700/50 hover:bg-red-900/40 text-gray-400 hover:text-white text-[8px] font-bold py-1 rounded transition-all uppercase border border-gray-600/30">
                     🗑️ Limpiar Memoria
                 </button>
+            </div>
+
+            <!-- AUTOMÁTICO Y ALERTAS DE UTILIDAD -->
+            <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 card-glow mt-3">
+                <h2 class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                    <span>⏱️</span> Automático y Alertas de Utilidad
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
+                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Auto-sync cada (min)</label>
+                        <input type="number" id="intervalo-sync" placeholder="—" step="1" min="1" oninput="window.parametroOperacionCambiado()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-gray-600">
+                        <label class="text-[8px] text-gray-400 uppercase font-bold block mb-1 text-center">Publicar si cambia ≥ (%)</label>
+                        <input type="number" id="umbral-publicar" placeholder="—" step="0.1" oninput="window.parametroOperacionCambiado()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-red-500/40">
+                        <label class="text-[8px] text-red-400 uppercase font-bold block mb-1 text-center">🔴 Utilidad menor a (S/)</label>
+                        <input type="number" id="util-rojo" placeholder="—" step="0.01" oninput="window.parametroOperacionCambiado()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-orange-500/40">
+                        <label class="text-[8px] text-orange-400 uppercase font-bold block mb-1 text-center">🟠 Utilidad menor a (S/)</label>
+                        <input type="number" id="util-naranja" placeholder="—" step="0.01" oninput="window.parametroOperacionCambiado()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                    <div class="bg-gray-900/40 p-2 rounded-lg border border-yellow-500/40 col-span-2">
+                        <label class="text-[8px] text-yellow-400 uppercase font-bold block mb-1 text-center">🟡 Utilidad menor a (S/) · desde ahí hacia arriba 🟢</label>
+                        <input type="number" id="util-amarillo" placeholder="—" step="0.01" oninput="window.parametroOperacionCambiado()" class="w-full bg-transparent text-sm font-mono font-bold text-white outline-none text-center">
+                    </div>
+                </div>
+                <p id="aviso-operacion" class="text-[8px] text-gray-400 mt-2 text-center leading-tight">Cargando parámetros desde la base de datos…</p>
             </div>
         </div>
 
@@ -133,7 +172,7 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
                     <div class="bg-gray-900 p-2 rounded-lg border border-green-500/30 flex flex-col justify-end h-full transition-all duration-300 focus-within:border-green-400">
                         <label class="text-[8px] font-bold text-green-400 uppercase block mb-1 text-center italic">Margen Aplicado % (Editable)</label>
                         <div class="flex items-center justify-center mt-auto">
-                            <input type="number" id="indicador-margen" value="5.0" step="0.1" oninput="window.calcularTodo('margen_manual')" class="w-full bg-transparent text-xl font-black text-green-400 font-mono outline-none text-center">
+                            <input type="number" id="indicador-margen" placeholder="—" step="0.1" oninput="window.calcularTodo('margen_manual')" class="w-full bg-transparent text-xl font-black text-green-400 font-mono outline-none text-center">
                             <span class="text-lg font-bold text-green-400 font-mono ml-0.5">%</span>
                         </div>
                     </div>
@@ -223,15 +262,19 @@ let coleccionDestino = "configuracion";
 let datosFirebase = {}; 
 let unsubscribe = escudharDocumento("configuracion");
 
-const INTERVALO_SYNC = 300; 
+let INTERVALO_SYNC = 0; // segundos; sale de la base de datos (minutos × 60). 0 = pausado
 let tiempoRestante = INTERVALO_SYNC;
 
 // Bucle del temporizador y autoejecución
 setInterval(() => {
+    const timerElem = document.getElementById('timer-sync');
+    if (!(INTERVALO_SYNC > 0)) {
+        if (timerElem) timerElem.innerText = 'Auto: pausado';
+        return;
+    }
     tiempoRestante--;
     let min = Math.floor(tiempoRestante / 60);
     let sec = tiempoRestante % 60;
-    const timerElem = document.getElementById('timer-sync');
     if (timerElem) {
         timerElem.innerText = `Auto: ${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
@@ -239,6 +282,113 @@ setInterval(() => {
         window.fetchTasas();
     }
 }, 1000);
+
+// ==== Parámetros de utilidad: SIEMPRE vienen de la base de datos (sin valores fijos) ====
+let parametrosCargados = false;
+const val = (id) => parseFloat(document.getElementById(id).value);
+
+const CAMPOS_PARAMETROS = {
+    'limite-mini-soles': 'limite_mini_soles',
+    'limite-estandar-soles': 'limite_estandar_soles',
+    'margen-mini': 'margen_mini',
+    'margen-estandar': 'margen_estandar',
+    'margen-vip': 'margen_vip',
+    'intervalo-sync': 'intervalo_sync_min',
+    'umbral-publicar': 'umbral_publicar_pct',
+    'util-rojo': 'util_rojo_soles',
+    'util-naranja': 'util_naranja_soles',
+    'util-amarillo': 'util_amarillo_soles'
+};
+
+function cargarParametrosDesdeBD() {
+    Object.keys(CAMPOS_PARAMETROS).forEach(id => {
+        const v = datosFirebase[CAMPOS_PARAMETROS[id]];
+        if (v !== undefined && v !== null && v !== '') document.getElementById(id).value = v;
+    });
+    aplicarIntervalo();
+}
+
+// Si el script automático de Apps Script está funcionando, el admin NO publica solo (evita pisarse)
+function automatizacionViva() {
+    const t = new Date(datosFirebase.auto_latido || 0).getTime();
+    return isFinite(t) && t > 0 && (Date.now() - t) < 15 * 60000;
+}
+
+// Intervalo del auto-sync (minutos escritos → segundos del temporizador)
+function aplicarIntervalo() {
+    const min = val('intervalo-sync');
+    INTERVALO_SYNC = (min >= 1) ? Math.round(min * 60) : 0;
+    tiempoRestante = INTERVALO_SYNC;
+}
+
+window.parametroOperacionCambiado = function() {
+    aplicarIntervalo();
+    actualizarAvisoOperacion();
+    window.calcularTodo('pen');
+};
+
+function actualizarAvisoOperacion() {
+    const el = document.getElementById('aviso-operacion');
+    if (!el) return;
+    const faltan = [];
+    if (!(val('intervalo-sync') >= 1)) faltan.push('Auto-sync (mínimo 1 min)');
+    if (!(val('umbral-publicar') > 0)) faltan.push('% para publicar solo');
+    const r = val('util-rojo'), n = val('util-naranja'), a = val('util-amarillo');
+    if (!(r > 0 && n > r && a > n)) faltan.push('umbrales de utilidad (🔴 < 🟠 < 🟡)');
+    if (faltan.length) {
+        el.className = 'text-[8px] text-red-400 mt-2 text-center leading-tight font-bold';
+        el.innerText = '⚠️ Falta configurar: ' + faltan.join(', ') + '. Esas funciones quedan en pausa hasta que lo guardes con Publicar.';
+    } else {
+        el.className = 'text-[8px] text-green-400 mt-2 text-center leading-tight font-bold';
+        el.innerText = '✅ Auto cada ' + val('intervalo-sync') + ' min · publica si cambia ≥ ' + val('umbral-publicar') + ' % · 🔴 < S/ ' + r + ' · 🟠 < S/ ' + n + ' · 🟡 < S/ ' + a;
+    }
+}
+
+// Los límites en dólares se derivan de los límites en soles con el tipo de cambio ACTUAL
+function recalcularLimites() {
+    const cambista = val('input-usd-pen-tasa');
+    [['limite-mini-soles', 'limite-mini'], ['limite-estandar-soles', 'limite-estandar']].forEach(([idSoles, idUsd]) => {
+        const soles = val(idSoles);
+        document.getElementById(idUsd).value = (cambista > 0 && soles > 0) ? (soles / cambista).toFixed(2) : '';
+    });
+}
+
+function numONull(id) {
+    const v = val(id);
+    return isFinite(v) ? v : null;
+}
+
+function leerParametros() {
+    const p = {
+        limMiniSoles: val('limite-mini-soles'), limVipSoles: val('limite-estandar-soles'),
+        limMini: val('limite-mini'), limVip: val('limite-estandar'),
+        mMini: val('margen-mini'), mStd: val('margen-estandar'), mVip: val('margen-vip')
+    };
+    const faltan = [];
+    if (!(p.limMiniSoles > 0)) faltan.push('Límite Mini (S/)');
+    if (!(p.limVipSoles > 0)) faltan.push('Límite VIP (S/)');
+    if (p.limMiniSoles > 0 && p.limVipSoles > 0 && p.limMiniSoles >= p.limVipSoles) faltan.push('el Límite Mini debe ser menor que el VIP');
+    if ((p.limMiniSoles > 0 || p.limVipSoles > 0) && !(val('input-usd-pen-tasa') > 0)) faltan.push('tipo de cambio S/ por $');
+    [['Margen Mini', p.mMini], ['Margen Estándar', p.mStd], ['Margen VIP', p.mVip]].forEach(([nombre, v]) => {
+        if (!(v >= 0 && v < 100)) faltan.push(nombre + ' (%)');
+    });
+    p.faltan = faltan;
+    p.ok = faltan.length === 0;
+    return p;
+}
+
+function actualizarAvisoParametros() {
+    const el = document.getElementById('aviso-parametros');
+    if (!el) return;
+    const P = leerParametros();
+    if (P.ok) {
+        el.className = 'text-[8px] text-green-400 mt-2 text-center leading-tight font-bold';
+        el.innerText = '✅ Mini: S/ ' + P.limMiniSoles + ' ≈ $' + P.limMini.toFixed(2) + ' · VIP: S/ ' + P.limVipSoles + ' ≈ $' + P.limVip.toFixed(2);
+    } else {
+        el.className = 'text-[8px] text-red-400 mt-2 text-center leading-tight font-bold';
+        el.innerText = '⚠️ Falta configurar: ' + P.faltan.join(', ') + '. Complétalo y presiona Publicar para guardarlo.';
+    }
+}
 
 // Listener en vivo de la base de datos
 function escudharDocumento(coleccion) {
@@ -253,6 +403,11 @@ function escudharDocumento(coleccion) {
             document.getElementById('nube-ves').innerText = "🇻🇪 " + (!isNaN(v) ? v.toFixed(2) : "0.00");
             let b = parseFloat(datosFirebase.bcv_ref);
             document.getElementById('nube-bcv').innerText = "🇻🇪 BCV " + (!isNaN(b) ? b.toFixed(2) : "0.00");
+            if (!parametrosCargados) {
+                parametrosCargados = true;
+                cargarParametrosDesdeBD();
+                window.calcularTodo('pen');
+            }
         }
     });
 }
@@ -271,6 +426,7 @@ window.toggleModoDemo = function() {
         texto.innerText = "Modo Producción";
         texto.className = "text-white font-bold";
     }
+    parametrosCargados = false;
     unsubscribe = escudharDocumento(coleccionDestino);
 };
 
@@ -282,12 +438,7 @@ window.cargarDesdeBD = function(origen = 'pen') {
     if(datosFirebase.bcv_ref) document.getElementById('tasa-bcv-ves').value = datosFirebase.bcv_ref;
     if(datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
     
-    if(datosFirebase.limite_mini) document.getElementById('limite-mini').value = datosFirebase.limite_mini;
-    if(datosFirebase.limite_estandar) document.getElementById('limite-estandar').value = datosFirebase.limite_estandar;
-    
-    if(datosFirebase.margen_mini) document.getElementById('margen-mini').value = datosFirebase.margen_mini;
-    if(datosFirebase.margen_estandar) document.getElementById('margen-estandar').value = datosFirebase.margen_estandar;
-    if(datosFirebase.margen_vip) document.getElementById('margen-vip').value = datosFirebase.margen_vip;
+    cargarParametrosDesdeBD();
 
     window.calcularTodo(origen);
 };
@@ -306,7 +457,7 @@ window.limpiarTodo = function() {
     disp.className = 'text-xs font-bold font-mono transition-all duration-300 text-green-400 mt-auto';
     
     // Restaurar margen visual por defecto sin afectar la lógica
-    document.getElementById('indicador-margen').value = document.getElementById('margen-estandar').value || "5.0";
+    document.getElementById('indicador-margen').value = document.getElementById('margen-estandar').value;
     
     const panelCalc = document.getElementById('panel-calculadora');
     panelCalc.className = 'bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-xl transition-all duration-500';
@@ -320,6 +471,7 @@ window.limpiarTodo = function() {
 };
 
 window.fetchTasas = async function() {
+    tiempoRestante = INTERVALO_SYNC;
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "⏳...";
     try {
@@ -351,9 +503,10 @@ window.fetchTasas = async function() {
                     const difPorcentualVES = Math.abs(nuevoVes - viejoVes) / viejoVes;
 
                     // Si hay volatilidad alta, recalcular y publicar automático
-                    if (difPorcentualPEN >= 0.005 || difPorcentualVES >= 0.005) {
+                    const umbralPub = val('umbral-publicar') / 100;
+                    if (umbralPub > 0 && !automatizacionViva() && (difPorcentualPEN >= umbralPub || difPorcentualVES >= umbralPub)) {
                         window.calcularTodo('pen');
-                        setTimeout(() => { window.publicarTasa(); }, 500);
+                        setTimeout(() => { window.publicarTasa(true); }, 500);
                     }
                 }
             });
@@ -376,20 +529,21 @@ function calcularTasaYMargen(usdMonto, origen) {
     const usdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 0;
     const tasaCostoReal = usdtVes / penUsdt;
     
-    const limMin = parseFloat(document.getElementById('limite-mini').value) || 35;
-    const limStd = parseFloat(document.getElementById('limite-estandar').value) || 120;
+    const P = leerParametros();
+    // El nivel se decide en SOLES (exacto): 20 y 200 soles, sin depender del redondeo de los dólares
+    const solesEq = Number((usdMonto * (parseFloat(document.getElementById('input-usd-pen-tasa').value) || 0)).toFixed(2));
     
-    let margenPct = parseFloat(document.getElementById('margen-estandar').value) || 5.0;
+    let margenPct = isFinite(P.mStd) ? P.mStd : 0;
     let nivel = "ESTÁNDAR"; let clase = "bg-blue-600"; let glow = "glow-std";
 
     // Determinar niveles visuales SIEMPRE para mantener el Badge correcto
     if (usdMonto > 0) {
-        if (usdMonto < limMin) {
+        if (P.limMiniSoles > 0 && solesEq < P.limMiniSoles) {
             nivel = "MINI"; clase = "bg-gray-600"; glow = "glow-mini";
-            margenPct = parseFloat(document.getElementById('margen-mini').value) || 7.5;
-        } else if (usdMonto >= limStd) {
+            margenPct = isFinite(P.mMini) ? P.mMini : 0;
+        } else if (P.limVipSoles > 0 && solesEq >= P.limVipSoles) {
             nivel = "VIP"; clase = "bg-[#1cd06b] text-[#0f141e]"; glow = "glow-vip";
-            margenPct = parseFloat(document.getElementById('margen-vip').value) || 3.5;
+            margenPct = isFinite(P.mVip) ? P.mVip : 0;
         }
     }
 
@@ -406,6 +560,7 @@ function calcularTasaYMargen(usdMonto, origen) {
 }
 
 window.calcularTodo = function(origen = 'pen') {
+    recalcularLimites();
     const tasaUsdPenCambista = parseFloat(document.getElementById('input-usd-pen-tasa').value) || 1;
     const tasaBcv = parseFloat(document.getElementById('tasa-bcv-ves').value) || 1;
     const tasaUsdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 1;
@@ -482,21 +637,37 @@ window.calcularTodo = function(origen = 'pen') {
     disp.innerText = utilidadFinal.toFixed(2) + " PEN";
     disp.className = "text-xs font-bold font-mono transition-all duration-300 mt-auto";
 
+    const uRojo = val('util-rojo'), uNaranja = val('util-naranja'), uAmarillo = val('util-amarillo');
+    const umbralesOk = (uRojo > 0 && uNaranja > uRojo && uAmarillo > uNaranja);
+
     if (soles <= 0) disp.classList.add('text-green-400');
-    else if (utilidadFinal < 5.00) disp.classList.add('util-red');
-    else if (utilidadFinal < 12.00) disp.classList.add('util-orange');
-    else if (utilidadFinal < 25.00) disp.classList.add('util-yellow');
+    else if (!umbralesOk) disp.classList.add('text-gray-300'); // sin umbrales configurados: sin semáforo
+    else if (utilidadFinal < uRojo) disp.classList.add('util-red');
+    else if (utilidadFinal < uNaranja) disp.classList.add('util-orange');
+    else if (utilidadFinal < uAmarillo) disp.classList.add('util-yellow');
     else disp.classList.add('util-green');
+
+    actualizarAvisoParametros();
+    actualizarAvisoOperacion();
 };
 
-window.publicarTasa = async function() {
+window.publicarTasa = async function(auto = false) {
+    // Los límites en dólares se recalculan con el tipo de cambio justo antes de guardar
+    recalcularLimites();
+    const P = leerParametros();
+    actualizarAvisoParametros();
+    if (!P.ok) {
+        if (!auto) alert("⚠️ No se puede publicar. Falta configurar: " + P.faltan.join(', '));
+        return;
+    }
+
     const penUsdt = parseFloat(document.getElementById('tasa-pen-usdt').value) || 1;
     const usdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 0;
     const tasaCostoReal = usdtVes / penUsdt;
 
-    const mMini = parseFloat(document.getElementById('margen-mini').value) || 7.5;
-    const mStd = parseFloat(document.getElementById('margen-estandar').value) || 5.0;
-    const mVip = parseFloat(document.getElementById('margen-vip').value) || 3.5;
+    const mMini = P.mMini;
+    const mStd = P.mStd;
+    const mVip = P.mVip;
 
     // Calcular las 3 tasas públicas con base en los parámetros actuales de la columna izquierda
     const tasaP2PMini = tasaCostoReal * (1 - (mMini / 100));
@@ -504,7 +675,8 @@ window.publicarTasa = async function() {
     const tasaP2PVip = tasaCostoReal * (1 - (mVip / 100));
 
     // El margen actual específico que haya puesto manualmente el operador (por si lo alteró)
-    const margenAplicadoActual = parseFloat(document.getElementById('indicador-margen').value) || 5.0;
+    const margenIndicador = parseFloat(document.getElementById('indicador-margen').value);
+    const margenAplicadoActual = isFinite(margenIndicador) ? margenIndicador : mStd;
 
     try {
         await setDoc(doc(db, coleccionDestino, "tasas"), {
@@ -512,8 +684,16 @@ window.publicarTasa = async function() {
             tasa_p2p_std: parseFloat(tasaP2PStd.toFixed(2)),
             tasa_p2p_vip: parseFloat(tasaP2PVip.toFixed(2)),
             
-            limite_mini: parseFloat(document.getElementById('limite-mini').value),
-            limite_estandar: parseFloat(document.getElementById('limite-estandar').value),
+            limite_mini: P.limMini,
+            limite_estandar: P.limVip,
+            limite_mini_soles: P.limMiniSoles,
+            limite_estandar_soles: P.limVipSoles,
+
+            intervalo_sync_min: numONull('intervalo-sync'),
+            umbral_publicar_pct: numONull('umbral-publicar'),
+            util_rojo_soles: numONull('util-rojo'),
+            util_naranja_soles: numONull('util-naranja'),
+            util_amarillo_soles: numONull('util-amarillo'),
             tasa_cambista: parseFloat(document.getElementById('input-usd-pen-tasa').value),
             bcv_ref: parseFloat(document.getElementById('tasa-bcv-ves').value),
 
@@ -526,7 +706,7 @@ window.publicarTasa = async function() {
             margen_vip: mVip,
             margen_actual_reportado: margenAplicadoActual,
             fecha: new Date().toISOString()
-        });
+        }, { merge: true }); // merge: conserva los parámetros que escribe la automatización (referencia, brechas, etc.)
         alert(`✅ Nube Sincronizada Exitosamente. [Entorno: ${coleccionDestino}]`);
     } catch (e) { 
         alert("❌ Error de permisos o conexión. Revisa tu consola."); 
