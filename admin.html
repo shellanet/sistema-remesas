@@ -525,7 +525,7 @@ window.fetchTasas = async function() {
     btnText.innerText = "⏳...";
     try {
         const p1 = fetch('https://api.exchangerate-api.com/v4/latest/USD').then(r => r.json()).then(d => {
-            document.getElementById('input-usd-pen-tasa').value = (d.rates.PEN - 0.01).toFixed(2);
+            document.getElementById('input-usd-pen-tasa').value = d.rates.PEN.toFixed(2);
         });
 
         const p2 = fetch('https://ve.dolarapi.com/v1/dolares/oficial').then(r => r.json()).then(d => {
