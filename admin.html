@@ -701,7 +701,15 @@ window.calcularTodo = function(origen = 'pen') {
 };
 
 window.publicarTasa = async function(auto = false) {
-    // Los límites en dólares se recalculan con el tipo de cambio justo antes de guardar
+    // 🛡️ Protección contra sobreescritura si el bot de Telegram está activo (< 15 min)
+    const ultimoLatido = new Date(datosFirebase.auto_latido || 0).getTime();
+    const botActivo = isFinite(ultimoLatido) && (Date.now() - ultimoLatido) < 15 * 60000;
+    
+    if (botActivo && !auto) {
+        alert("⚠️ El Modo Automático está activo. Pausa el bot en Telegram (ej: /modo manual) antes de publicar desde el admin.");
+        return;
+    }
+
     recalcularLimites();
     const P = leerParametros();
     actualizarAvisoParametros();
@@ -718,7 +726,6 @@ window.publicarTasa = async function(auto = false) {
     const mStd = P.mStd;
     const mVip = P.mVip;
 
-    // Calcular las 3 tasas públicas con base en los parámetros actuales de la columna izquierda
     const tasaP2PMini = tasaCostoReal * (1 - (mMini / 100));
     const tasaP2PStd = tasaCostoReal * (1 - (mStd / 100));
     const tasaP2PVip = tasaCostoReal * (1 - (mVip / 100));
@@ -742,7 +749,7 @@ window.publicarTasa = async function(auto = false) {
             tasa_cambista: parseFloat(document.getElementById('input-usd-pen-tasa').value),
             bcv_ref: parseFloat(document.getElementById('tasa-bcv-ves').value),
 
-            tasa_publica: tasaP2PStd.toFixed(2), // La que se muestra por defecto al público
+            tasa_publica: tasaP2PStd.toFixed(2),
             pen_ref: document.getElementById('tasa-pen-usdt').value,
             ves_ref: document.getElementById('tasa-usdt-ves').value,
             
@@ -751,19 +758,18 @@ window.publicarTasa = async function(auto = false) {
             margen_vip: mVip,
             fecha: new Date().toISOString()
         };
-        // Si las cajas muestran los márgenes en vivo del bot, NO se guardan como márgenes base
         if (mostrandoEfectivos) {
             delete datosPublicar.margen_mini;
             delete datosPublicar.margen_estandar;
             delete datosPublicar.margen_vip;
         }
-        // merge: conserva los parámetros que escribe la automatización (referencia, brechas, etc.)
         await setDoc(doc(db, coleccionDestino, "tasas"), datosPublicar, { merge: true });
         alert(`✅ Nube Sincronizada Exitosamente. [Entorno: ${coleccionDestino}]`);
     } catch (e) { 
         alert("❌ Error de permisos o conexión. Revisa tu consola."); 
     }
 };
+
 </script>
 </body>
 </html>
