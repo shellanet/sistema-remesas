@@ -266,7 +266,10 @@ let INTERVALO_SYNC = 0; // segundos; sale de la base de datos (minutos × 60). 0
 let tiempoRestante = INTERVALO_SYNC;
 
 // Bucle del temporizador y autoejecución
+let contadorEstado = 0;
 setInterval(() => {
+    contadorEstado = (contadorEstado + 1) % 30;
+    if (contadorEstado === 0) aplicarMargenesEfectivos(); // cada 30 s: ¿sigue vivo el bot?
     const timerElem = document.getElementById('timer-sync');
     if (!(INTERVALO_SYNC > 0)) {
         if (timerElem) timerElem.innerText = 'Auto: pausado';
@@ -312,6 +315,47 @@ function cargarParametrosDesdeBD() {
 function automatizacionViva() {
     const t = new Date(datosFirebase.auto_latido || 0).getTime();
     return isFinite(t) && t > 0 && (Date.now() - t) < 15 * 60000;
+}
+
+// ==== Márgenes en vivo del bot ====
+// Mientras la automatización está viva, las 3 cajas de margen muestran los márgenes que el bot aplica ahora
+// (solo lectura). Tus márgenes base siguen guardados aparte y Publicar no los toca en ese modo.
+let mostrandoEfectivos = false;
+const CAJAS_MARGEN = {
+    'margen-mini': ['margen_efectivo_mini', 'margen_mini'],
+    'margen-estandar': ['margen_efectivo_std', 'margen_estandar'],
+    'margen-vip': ['margen_efectivo_vip', 'margen_vip']
+};
+
+function liberarCajasMargen() {
+    Object.keys(CAJAS_MARGEN).forEach(id => {
+        const caja = document.getElementById(id);
+        caja.readOnly = false;
+        caja.classList.remove('opacity-60');
+    });
+}
+
+function aplicarMargenesEfectivos() {
+    const hayDatos = Object.keys(CAJAS_MARGEN).every(id => isFinite(parseFloat(datosFirebase[CAJAS_MARGEN[id][0]])));
+    if (automatizacionViva() && hayDatos) {
+        Object.keys(CAJAS_MARGEN).forEach(id => {
+            const caja = document.getElementById(id);
+            caja.value = parseFloat(datosFirebase[CAJAS_MARGEN[id][0]]).toFixed(2);
+            caja.readOnly = true;
+            caja.classList.add('opacity-60');
+        });
+        mostrandoEfectivos = true;
+        window.calcularTodo('pen');
+    } else if (mostrandoEfectivos) {
+        // El bot dejó de latir: volver a tus márgenes base guardados y desbloquear las cajas
+        liberarCajasMargen();
+        Object.keys(CAJAS_MARGEN).forEach(id => {
+            const base = datosFirebase[CAJAS_MARGEN[id][1]];
+            if (base !== undefined && base !== null && base !== '') document.getElementById(id).value = base;
+        });
+        mostrandoEfectivos = false;
+        window.calcularTodo('pen');
+    }
 }
 
 // Intervalo del auto-sync (minutos escritos → segundos del temporizador)
@@ -388,6 +432,7 @@ function actualizarAvisoParametros() {
         el.className = 'text-[8px] text-red-400 mt-2 text-center leading-tight font-bold';
         el.innerText = '⚠️ Falta configurar: ' + P.faltan.join(', ') + '. Complétalo y presiona Publicar para guardarlo.';
     }
+    if (mostrandoEfectivos) el.innerText += ' · 🤖 Márgenes en vivo del bot (solo lectura)';
 }
 
 // Listener en vivo de la base de datos
@@ -408,6 +453,7 @@ function escudharDocumento(coleccion) {
                 cargarParametrosDesdeBD();
                 window.calcularTodo('pen');
             }
+            aplicarMargenesEfectivos();
         }
     });
 }
@@ -427,6 +473,9 @@ window.toggleModoDemo = function() {
         texto.className = "text-white font-bold";
     }
     parametrosCargados = false;
+    liberarCajasMargen();
+    mostrandoEfectivos = false;
+    datosFirebase = {};
     unsubscribe = escudharDocumento(coleccionDestino);
 };
 
@@ -674,12 +723,8 @@ window.publicarTasa = async function(auto = false) {
     const tasaP2PStd = tasaCostoReal * (1 - (mStd / 100));
     const tasaP2PVip = tasaCostoReal * (1 - (mVip / 100));
 
-    // El margen actual específico que haya puesto manualmente el operador (por si lo alteró)
-    const margenIndicador = parseFloat(document.getElementById('indicador-margen').value);
-    const margenAplicadoActual = isFinite(margenIndicador) ? margenIndicador : mStd;
-
     try {
-        await setDoc(doc(db, coleccionDestino, "tasas"), {
+        const datosPublicar = {
             tasa_p2p_mini: parseFloat(tasaP2PMini.toFixed(2)),
             tasa_p2p_std: parseFloat(tasaP2PStd.toFixed(2)),
             tasa_p2p_vip: parseFloat(tasaP2PVip.toFixed(2)),
@@ -704,9 +749,16 @@ window.publicarTasa = async function(auto = false) {
             margen_mini: mMini,
             margen_estandar: mStd,
             margen_vip: mVip,
-            margen_actual_reportado: margenAplicadoActual,
             fecha: new Date().toISOString()
-        }, { merge: true }); // merge: conserva los parámetros que escribe la automatización (referencia, brechas, etc.)
+        };
+        // Si las cajas muestran los márgenes en vivo del bot, NO se guardan como márgenes base
+        if (mostrandoEfectivos) {
+            delete datosPublicar.margen_mini;
+            delete datosPublicar.margen_estandar;
+            delete datosPublicar.margen_vip;
+        }
+        // merge: conserva los parámetros que escribe la automatización (referencia, brechas, etc.)
+        await setDoc(doc(db, coleccionDestino, "tasas"), datosPublicar, { merge: true });
         alert(`✅ Nube Sincronizada Exitosamente. [Entorno: ${coleccionDestino}]`);
     } catch (e) { 
         alert("❌ Error de permisos o conexión. Revisa tu consola."); 
