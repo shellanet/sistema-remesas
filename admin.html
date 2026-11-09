@@ -30,7 +30,13 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
     </div>
 
     <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
-        <h1 class="text-xl font-black text-blue-500 tracking-tighter uppercase italic">Global-Flow <span class="text-white text-[10px] font-light not-italic">v5.2.0 GitHub Edition</span></h1>
+        <div class="flex items-center gap-3">
+            <h1 class="text-xl font-black text-blue-500 tracking-tighter uppercase italic">Global-Flow <span class="text-white text-[10px] font-light not-italic">v5.2.0 GitHub Edition</span></h1>
+            <!-- BOTÓN DE MODO AUTO/MANUAL -->
+            <button id="btn-toggle-bot" onclick="window.toggleModoBot()" class="text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase transition-all border border-gray-500 bg-gray-700 text-white">
+                Cargando Modo...
+            </button>
+        </div>
         <span class="bg-blue-500/10 text-blue-400 text-[8px] px-2 py-1 rounded border border-blue-500/20 font-bold uppercase italic flex items-center gap-1">
             <span class="flex h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span> Auto-Sync Activo
         </span>
@@ -212,13 +218,20 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
             </div>
 
             <!-- PUBLICACIÓN -->
-            <div class="bg-gradient-to-br from-blue-700 to-blue-900 p-4 rounded-xl shadow-2xl flex flex-col items-center gap-3">
+            <div class="bg-gradient-to-br from-blue-700 to-blue-900 p-4 rounded-xl shadow-2xl flex flex-col items-center gap-3 relative">
+                
+                <!-- COBERTOR DE BLOQUEO DE BOTÓN EN MODO AUTO -->
+                <div id="cobertor-publicar" class="absolute inset-0 bg-blue-900/80 backdrop-blur-sm z-10 hidden flex-col justify-center items-center rounded-xl border border-blue-500/50">
+                    <span class="text-2xl mb-1">🤖</span>
+                    <span class="text-[10px] font-bold text-white uppercase text-center px-4">El bot está controlando la nube.<br>Cambia a Modo Manual para actualizar tasas.</span>
+                </div>
+                
                 <div class="text-center">
                     <p class="text-blue-200 text-[8px] font-bold uppercase tracking-widest flex justify-center items-center gap-1">Tasa Venta Calculada <span id="badge-admin-nivel-tasa" class="hidden px-1 rounded text-[7px] text-white"></span></p>
                     <p id="tasa-final-calc" class="text-4xl font-black text-white italic tracking-tighter drop-shadow-md">0.00</p>
                 </div>
 
-                <button onclick="window.publicarTasa()" class="btn-whatsapp w-full max-w-[200px] bg-white text-blue-700 font-black py-2 rounded-lg hover:scale-105 transition-all uppercase text-[10px] shadow-xl border-b-4 border-blue-950 active:border-b-0">🚀 Actualizar Nube</button>
+                <button id="btn-publicar-tasa" onclick="window.publicarTasa()" class="btn-whatsapp w-full max-w-[200px] bg-white text-blue-700 font-black py-2 rounded-lg hover:scale-105 transition-all uppercase text-[10px] shadow-xl border-b-4 border-blue-950 active:border-b-0">🚀 Actualizar Nube</button>
 
                 <div class="w-full bg-black/40 p-2 rounded-lg border border-white/5 text-center">
                     <div class="flex items-center justify-center gap-2 mb-1">
@@ -242,6 +255,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// === CONSTANTES DE TELEGRAM Y BINANCE ===
+const TELEGRAM_BOT_TOKEN = "AQUI_TU_TOKEN_REAL_DE_BOTFATHER";
+const TELEGRAM_CHAT_ID = "5674337957";
 const URL_BINANCE_GOOGLE = "https://script.google.com/macros/s/AKfycbzNauVp44DGmVry8HMEkkIKvlCXlzDOAowF73bJo4qa_nAkJTY2-X4L9KvBOYA7jeeL-A/exec";
 
 const firebaseConfig = {
@@ -255,21 +271,49 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Autenticación silenciosa
 signInWithEmailAndPassword(auth, "demo@remesas.com", "Demo123456").catch(() => {});
 
 let coleccionDestino = "configuracion";
 let datosFirebase = {}; 
 let unsubscribe = escudharDocumento("configuracion");
 
-let INTERVALO_SYNC = 0; // segundos; sale de la base de datos (minutos × 60). 0 = pausado
+let INTERVALO_SYNC = 0; 
 let tiempoRestante = INTERVALO_SYNC;
 
-// Bucle del temporizador y autoejecución
+window.usuarioCalculando = function() {
+    const activo = document.activeElement;
+    if (!activo) return false;
+    const cajasCalculadora = ['input-pen', 'input-usd', 'compra-binance', 'envio-ves', 'destino-usd-bcv', 'indicador-margen', 'tasa-pen-usdt', 'input-usd-pen-tasa', 'tasa-usdt-ves', 'tasa-bcv-ves'];
+    return cajasCalculadora.includes(activo.id);
+};
+
+window.toggleModoBot = async function() {
+    if (!datosFirebase || Object.keys(datosFirebase).length === 0) return alert("Cargando datos...");
+    const nuevoEstado = !datosFirebase.ref_activa;
+    try {
+        await setDoc(doc(db, coleccionDestino, "tasas"), { ref_activa: nuevoEstado }, { merge: true });
+        
+        const mensajeTexto = nuevoEstado 
+            ? `💻 ADMIN: ✅ MODO AUTO encendido en [${coleccionDestino}]. Analizando a Sauki...` 
+            : `💻 ADMIN: 🛑 MODO MANUAL activado en [${coleccionDestino}]. Cajas desbloqueadas para ajuste manual.`;
+            
+        if (TELEGRAM_BOT_TOKEN !== "AQUI_TU_TOKEN_REAL_DE_BOTFATHER") {
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: mensajeTexto })
+            }).catch(e => console.log("Error de Telegram desde admin:", e));
+        }
+        
+    } catch (e) { 
+        alert("❌ Error cambiando modo. Revisa permisos."); 
+    }
+};
+
 let contadorEstado = 0;
 setInterval(() => {
     contadorEstado = (contadorEstado + 1) % 30;
-    if (contadorEstado === 0) aplicarMargenesEfectivos(); // cada 30 s: ¿sigue vivo el bot?
+    if (contadorEstado === 0) aplicarMargenesEfectivos();
     const timerElem = document.getElementById('timer-sync');
     if (!(INTERVALO_SYNC > 0)) {
         if (timerElem) timerElem.innerText = 'Auto: pausado';
@@ -286,7 +330,6 @@ setInterval(() => {
     }
 }, 1000);
 
-// ==== Parámetros de utilidad: SIEMPRE vienen de la base de datos (sin valores fijos) ====
 let parametrosCargados = false;
 const val = (id) => parseFloat(document.getElementById(id).value);
 
@@ -306,26 +349,22 @@ const CAMPOS_PARAMETROS = {
 function cargarParametrosDesdeBD() {
     Object.keys(CAMPOS_PARAMETROS).forEach(id => {
         const v = datosFirebase[CAMPOS_PARAMETROS[id]];
-        if (v !== undefined && v !== null && v !== '') document.getElementById(id).value = v;
+        if (v !== undefined && v !== null && v !== '') {
+            if(document.activeElement !== document.getElementById(id)) document.getElementById(id).value = v;
+        }
     });
     aplicarIntervalo();
 }
 
-// Si el script automático de Apps Script está funcionando, el admin NO publica solo (evita pisarse)
 function automatizacionViva() {
     const t = new Date(datosFirebase.auto_latido || 0).getTime();
     return isFinite(t) && t > 0 && (Date.now() - t) < 15 * 60000;
 }
 
-// ¿Manda el bot en esta colección? (está vivo, o la colección está en modo referencia).
-// Mientras mande, el admin NO publica solo: solo publica cuando tú presionas Publicar.
 function botManda() {
     return automatizacionViva() || datosFirebase.ref_activa === true;
 }
 
-// ==== Márgenes en vivo del bot ====
-// Mientras la automatización está viva, las 3 cajas de margen muestran los márgenes que el bot aplica ahora
-// (solo lectura). Tus márgenes base siguen guardados aparte y Publicar no los toca en ese modo.
 let mostrandoEfectivos = false;
 const CAJAS_MARGEN = {
     'margen-mini': ['margen_efectivo_mini', 'margen_mini'],
@@ -342,29 +381,45 @@ function liberarCajasMargen() {
 }
 
 function aplicarMargenesEfectivos() {
-    const hayDatos = Object.keys(CAJAS_MARGEN).every(id => isFinite(parseFloat(datosFirebase[CAJAS_MARGEN[id][0]])));
-    if (automatizacionViva() && hayDatos) {
+    // AHORA EL BLOQUEO DEPENDE ESTRICTAMENTE DE SI ref_activa ES TRUE. NO IMPORTA SI AUN NO EXISTEN LOS DATOS EFECTIVOS.
+    if (datosFirebase.ref_activa === true) {
+        // Bloquear Cajas de márgenes
         Object.keys(CAJAS_MARGEN).forEach(id => {
             const caja = document.getElementById(id);
-            caja.value = parseFloat(datosFirebase[CAJAS_MARGEN[id][0]]).toFixed(2);
+            const valEfectivo = parseFloat(datosFirebase[CAJAS_MARGEN[id][0]]);
+            if(isFinite(valEfectivo) && document.activeElement !== caja) {
+                caja.value = valEfectivo.toFixed(2);
+            }
             caja.readOnly = true;
             caja.classList.add('opacity-60');
         });
+        
+        // Bloquear botón de publicar
+        document.getElementById('cobertor-publicar').classList.remove('hidden');
+        document.getElementById('cobertor-publicar').classList.add('flex');
+        
         mostrandoEfectivos = true;
-        window.calcularTodo('pen');
-    } else if (mostrandoEfectivos) {
-        // El bot dejó de latir: volver a tus márgenes base guardados y desbloquear las cajas
-        liberarCajasMargen();
-        Object.keys(CAJAS_MARGEN).forEach(id => {
-            const base = datosFirebase[CAJAS_MARGEN[id][1]];
-            if (base !== undefined && base !== null && base !== '') document.getElementById(id).value = base;
-        });
-        mostrandoEfectivos = false;
-        window.calcularTodo('pen');
+        if(!window.usuarioCalculando()) window.calcularTodo('pen');
+    } else {
+        // MODO MANUAL: Liberar Cajas y Botón
+        if (mostrandoEfectivos || document.getElementById('margen-mini').readOnly) {
+            liberarCajasMargen();
+            Object.keys(CAJAS_MARGEN).forEach(id => {
+                const base = datosFirebase[CAJAS_MARGEN[id][1]];
+                if (base !== undefined && base !== null && base !== '') {
+                    if(document.activeElement !== document.getElementById(id)) document.getElementById(id).value = base;
+                }
+            });
+            mostrandoEfectivos = false;
+            if(!window.usuarioCalculando()) window.calcularTodo('pen');
+        }
+        
+        // Desbloquear botón de publicar
+        document.getElementById('cobertor-publicar').classList.remove('flex');
+        document.getElementById('cobertor-publicar').classList.add('hidden');
     }
 }
 
-// Intervalo del auto-sync (minutos escritos → segundos del temporizador)
 function aplicarIntervalo() {
     const min = val('intervalo-sync');
     INTERVALO_SYNC = (min >= 1) ? Math.round(min * 60) : 0;
@@ -394,12 +449,13 @@ function actualizarAvisoOperacion() {
     }
 }
 
-// Los límites en dólares se derivan de los límites en soles con el tipo de cambio ACTUAL
 function recalcularLimites() {
     const cambista = val('input-usd-pen-tasa');
     [['limite-mini-soles', 'limite-mini'], ['limite-estandar-soles', 'limite-estandar']].forEach(([idSoles, idUsd]) => {
         const soles = val(idSoles);
-        document.getElementById(idUsd).value = (cambista > 0 && soles > 0) ? (soles / cambista).toFixed(2) : '';
+        if(document.activeElement !== document.getElementById(idUsd)) {
+            document.getElementById(idUsd).value = (cambista > 0 && soles > 0) ? (soles / cambista).toFixed(2) : '';
+        }
     });
 }
 
@@ -441,11 +497,22 @@ function actualizarAvisoParametros() {
     if (mostrandoEfectivos) el.innerText += ' · 🤖 Márgenes en vivo del bot (solo lectura)';
 }
 
-// Listener en vivo de la base de datos
 function escudharDocumento(coleccion) {
     return onSnapshot(doc(db, coleccion, "tasas"), (docSnap) => {
         if (docSnap.exists()) {
             datosFirebase = docSnap.data();
+            
+            const btnBot = document.getElementById('btn-toggle-bot');
+            if (btnBot) {
+                if (datosFirebase.ref_activa) {
+                    btnBot.innerText = '🤖 MODO AUTO: ON';
+                    btnBot.className = 'text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase transition-all border border-green-400 bg-green-600 hover:bg-green-500 text-white';
+                } else {
+                    btnBot.innerText = '⚙️ MODO MANUAL';
+                    btnBot.className = 'text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase transition-all border border-red-400 bg-red-600 hover:bg-red-500 text-white';
+                }
+            }
+            
             let tp = parseFloat(datosFirebase.tasa_publica);
             document.getElementById('tasa-en-nube').innerText = !isNaN(tp) ? tp.toFixed(2) : "---";
             let p = parseFloat(datosFirebase.pen_ref);
@@ -454,17 +521,18 @@ function escudharDocumento(coleccion) {
             document.getElementById('nube-ves').innerText = "🇻🇪 " + (!isNaN(v) ? v.toFixed(2) : "0.00");
             let b = parseFloat(datosFirebase.bcv_ref);
             document.getElementById('nube-bcv').innerText = "🇻🇪 BCV " + (!isNaN(b) ? b.toFixed(2) : "0.00");
+            
             if (!parametrosCargados) {
                 parametrosCargados = true;
                 cargarParametrosDesdeBD();
-                window.calcularTodo('pen');
+                if(!window.usuarioCalculando()) window.calcularTodo('pen');
             }
+            
+            // Fuerza la evaluación de bloqueo o desbloqueo
             aplicarMargenesEfectivos();
         }
     });
 }
-
-// ==== FUNCIONES GLOBALES EXPORTADAS ====
 
 window.toggleModoDemo = function() {
     if (unsubscribe) unsubscribe();
@@ -482,6 +550,8 @@ window.toggleModoDemo = function() {
     liberarCajasMargen();
     mostrandoEfectivos = false;
     datosFirebase = {};
+    document.getElementById('cobertor-publicar').classList.add('hidden');
+    document.getElementById('cobertor-publicar').classList.remove('flex');
     unsubscribe = escudharDocumento(coleccionDestino);
 };
 
@@ -494,7 +564,6 @@ window.cargarDesdeBD = function(origen = 'pen') {
     if(datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
     
     cargarParametrosDesdeBD();
-
     window.calcularTodo(origen);
 };
 
@@ -511,7 +580,6 @@ window.limpiarTodo = function() {
     disp.innerText = '0.00 PEN';
     disp.className = 'text-xs font-bold font-mono transition-all duration-300 text-green-400 mt-auto';
     
-    // Restaurar margen visual por defecto sin afectar la lógica
     document.getElementById('indicador-margen').value = document.getElementById('margen-estandar').value;
     
     const panelCalc = document.getElementById('panel-calculadora');
@@ -531,11 +599,15 @@ window.fetchTasas = async function() {
     btnText.innerText = "⏳...";
     try {
         const p1 = fetch('https://api.exchangerate-api.com/v4/latest/USD').then(r => r.json()).then(d => {
-            document.getElementById('input-usd-pen-tasa').value = (d.rates.PEN - 0.01).toFixed(2);
+            if(!window.usuarioCalculando()) {
+                document.getElementById('input-usd-pen-tasa').value = (d.rates.PEN - 0.01).toFixed(2);
+            }
         });
 
         const p2 = fetch('https://ve.dolarapi.com/v1/dolares/oficial').then(r => r.json()).then(d => {
-            document.getElementById('tasa-bcv-ves').value = d.promedio.toFixed(2);
+            if(!window.usuarioCalculando()) {
+                document.getElementById('tasa-bcv-ves').value = d.promedio.toFixed(2);
+            }
         });
 
         const p3 = fetch(URL_BINANCE_GOOGLE)
@@ -551,24 +623,24 @@ window.fetchTasas = async function() {
                     const viejoPen = parseFloat(datosFirebase.pen_ref) || nuevoPen;
                     const viejoVes = parseFloat(datosFirebase.ves_ref) || nuevoVes;
 
-                    document.getElementById('tasa-pen-usdt').value = nuevoPen.toFixed(3);
-                    document.getElementById('tasa-usdt-ves').value = nuevoVes.toFixed(2);
+                    if(!window.usuarioCalculando()) {
+                        document.getElementById('tasa-pen-usdt').value = nuevoPen.toFixed(3);
+                        document.getElementById('tasa-usdt-ves').value = nuevoVes.toFixed(2);
+                    }
 
                     const difPorcentualPEN = Math.abs(nuevoPen - viejoPen) / viejoPen;
                     const difPorcentualVES = Math.abs(nuevoVes - viejoVes) / viejoVes;
 
-                    // Si hay volatilidad alta, recalcular y publicar automático
                     const umbralPub = val('umbral-publicar') / 100;
                     if (umbralPub > 0 && !botManda() && (difPorcentualPEN >= umbralPub || difPorcentualVES >= umbralPub)) {
-                        window.calcularTodo('pen');
+                        if(!window.usuarioCalculando()) window.calcularTodo('pen');
                         setTimeout(() => { window.publicarTasa(true); }, 500);
                     }
                 }
             });
 
-        // Ejecutar las 3 consultas al mismo tiempo
         await Promise.all([p1, p2, p3]);
-        window.calcularTodo('pen');
+        if(!window.usuarioCalculando()) window.calcularTodo('pen');
         btnText.innerText = "✅";
         tiempoRestante = INTERVALO_SYNC; 
     } catch (e) { 
@@ -578,20 +650,17 @@ window.fetchTasas = async function() {
     setTimeout(() => btnText.innerText = "🔄 Sync API", 2000);
 };
 
-// Motor Lógico Pro (Evalúa márgenes manuales vs dinámicos)
 function calcularTasaYMargen(usdMonto, origen) {
     const penUsdt = parseFloat(document.getElementById('tasa-pen-usdt').value) || 1;
     const usdtVes = parseFloat(document.getElementById('tasa-usdt-ves').value) || 0;
     const tasaCostoReal = usdtVes / penUsdt;
     
     const P = leerParametros();
-    // El nivel se decide en SOLES (exacto): 20 y 200 soles, sin depender del redondeo de los dólares
     const solesEq = Number((usdMonto * (parseFloat(document.getElementById('input-usd-pen-tasa').value) || 0)).toFixed(2));
     
     let margenPct = isFinite(P.mStd) ? P.mStd : 0;
     let nivel = "ESTÁNDAR"; let clase = "bg-blue-600"; let glow = "glow-std";
 
-    // Determinar niveles visuales SIEMPRE para mantener el Badge correcto
     if (usdMonto > 0) {
         if (P.limMiniSoles > 0 && solesEq < P.limMiniSoles) {
             nivel = "MINI"; clase = "bg-gray-600"; glow = "glow-mini";
@@ -602,12 +671,12 @@ function calcularTasaYMargen(usdMonto, origen) {
         }
     }
 
-    // Intervención manual: Si el usuario modificó la caja de porcentaje, la matemática le obedece ciegamente.
     if (origen === 'margen_manual') {
         margenPct = parseFloat(document.getElementById('indicador-margen').value) || 0;
     } else {
-        // Si no, la caja se actualiza sola para reflejar la decisión del motor.
-        document.getElementById('indicador-margen').value = margenPct.toFixed(1);
+        if(document.activeElement !== document.getElementById('indicador-margen')) {
+            document.getElementById('indicador-margen').value = margenPct.toFixed(1);
+        }
     }
     
     const tasaFinal = tasaCostoReal * (1 - (margenPct / 100));
@@ -636,21 +705,18 @@ window.calcularTodo = function(origen = 'pen') {
                                origen === 'usdt' ? (parseFloat(document.getElementById('compra-binance').value) || 0) * tasaUsdtVes :
                                (parseFloat(document.getElementById('destino-usd-bcv').value) || 0) * tasaBcv;
         
-        // Ingeniería inversa para calcular dólares
         let usdEstimado = (objetivoSimulado / (tasaUsdtVes / tasaPenUsdt)) / tasaUsdPenCambista;
         datosTasa = calcularTasaYMargen(usdEstimado, origen);
         soles = objetivoSimulado / datosTasa.tasa;
         eqUSD = soles / tasaUsdPenCambista;
         
-        // Recálculo de precisión
         datosTasa = calcularTasaYMargen(eqUSD, origen);
         soles = objetivoSimulado / datosTasa.tasa;
         eqUSD = soles / tasaUsdPenCambista;
     }
 
-    // Actualización de UI evitando sobreescribir la caja activa
-    if (origen !== 'pen' && origen !== 'margen_manual') document.getElementById('input-pen').value = soles.toFixed(2);
-    if (origen !== 'usd' && origen !== 'margen_manual') document.getElementById('input-usd').value = eqUSD.toFixed(2);
+    if (origen !== 'pen' && origen !== 'margen_manual' && document.activeElement !== document.getElementById('input-pen')) document.getElementById('input-pen').value = soles.toFixed(2);
+    if (origen !== 'usd' && origen !== 'margen_manual' && document.activeElement !== document.getElementById('input-usd')) document.getElementById('input-usd').value = eqUSD.toFixed(2);
 
     document.getElementById('tasa-final-calc').innerText = datosTasa.tasa.toFixed(2);
 
@@ -671,18 +737,17 @@ window.calcularTodo = function(origen = 'pen') {
         panelCalc.classList.add('border-gray-700'); wrapperVes.classList.add('border-gray-700');
     }
 
-    const vesFinal = Math.round(soles * datosTasa.tasa); // Bs exactos: sin decimales
+    const vesFinal = Math.round(soles * datosTasa.tasa); 
     const usdtFinal = vesFinal / tasaUsdtVes;
     const usdDestinoFinal = vesFinal / tasaBcv;
 
-    if (origen !== 'usdt') document.getElementById('compra-binance').value = usdtFinal.toFixed(2);
-    if (origen !== 'ves') document.getElementById('envio-ves').value = vesFinal.toFixed(2);
-    if (origen !== 'destino') document.getElementById('destino-usd-bcv').value = usdDestinoFinal.toFixed(2);
+    if (origen !== 'usdt' && document.activeElement !== document.getElementById('compra-binance')) document.getElementById('compra-binance').value = usdtFinal.toFixed(2);
+    if (origen !== 'ves' && document.activeElement !== document.getElementById('envio-ves')) document.getElementById('envio-ves').value = vesFinal.toFixed(2);
+    if (origen !== 'destino' && document.activeElement !== document.getElementById('destino-usd-bcv')) document.getElementById('destino-usd-bcv').value = usdDestinoFinal.toFixed(2);
 
     const costoRepoSoles = usdtFinal * tasaPenUsdt;
     const bsModoBCV = eqUSD * tasaBcv; 
 
-    // Render de Desgloses Inferiores
     document.getElementById('costo-repo-soles-display').innerText = "S/ " + (Number.isFinite(costoRepoSoles) ? costoRepoSoles.toFixed(2) : "0.00");
     document.getElementById('bcv-bs-display').innerText = Number.isFinite(bsModoBCV) ? bsModoBCV.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " Bs" : "0.00 Bs";
     document.getElementById('ves-usd-paralelo-display').innerText = "$ " + (Number.isFinite(usdtFinal) ? usdtFinal.toFixed(2) : "0.00");
@@ -696,7 +761,7 @@ window.calcularTodo = function(origen = 'pen') {
     const umbralesOk = (uRojo > 0 && uNaranja > uRojo && uAmarillo > uNaranja);
 
     if (soles <= 0) disp.classList.add('text-green-400');
-    else if (!umbralesOk) disp.classList.add('text-gray-300'); // sin umbrales configurados: sin semáforo
+    else if (!umbralesOk) disp.classList.add('text-gray-300');
     else if (utilidadFinal < uRojo) disp.classList.add('util-red');
     else if (utilidadFinal < uNaranja) disp.classList.add('util-orange');
     else if (utilidadFinal < uAmarillo) disp.classList.add('util-yellow');
@@ -707,7 +772,11 @@ window.calcularTodo = function(origen = 'pen') {
 };
 
 window.publicarTasa = async function(auto = false) {
-    // Los límites en dólares se recalculan con el tipo de cambio justo antes de guardar
+    if (datosFirebase.ref_activa === true) {
+        alert("⚠️ No puedes publicar manualmente mientras el Modo Automático esté encendido.");
+        return;
+    }
+
     recalcularLimites();
     const P = leerParametros();
     actualizarAvisoParametros();
@@ -724,7 +793,6 @@ window.publicarTasa = async function(auto = false) {
     const mStd = P.mStd;
     const mVip = P.mVip;
 
-    // Calcular las 3 tasas públicas con base en los parámetros actuales de la columna izquierda
     const tasaP2PMini = tasaCostoReal * (1 - (mMini / 100));
     const tasaP2PStd = tasaCostoReal * (1 - (mStd / 100));
     const tasaP2PVip = tasaCostoReal * (1 - (mVip / 100));
@@ -748,7 +816,7 @@ window.publicarTasa = async function(auto = false) {
             tasa_cambista: parseFloat(document.getElementById('input-usd-pen-tasa').value),
             bcv_ref: parseFloat(document.getElementById('tasa-bcv-ves').value),
 
-            tasa_publica: tasaP2PStd.toFixed(2), // La que se muestra por defecto al público
+            tasa_publica: tasaP2PStd.toFixed(2),
             pen_ref: document.getElementById('tasa-pen-usdt').value,
             ves_ref: document.getElementById('tasa-usdt-ves').value,
             
@@ -757,13 +825,11 @@ window.publicarTasa = async function(auto = false) {
             margen_vip: mVip,
             fecha: new Date().toISOString()
         };
-        // Si las cajas muestran los márgenes en vivo del bot, NO se guardan como márgenes base
         if (mostrandoEfectivos) {
             delete datosPublicar.margen_mini;
             delete datosPublicar.margen_estandar;
             delete datosPublicar.margen_vip;
         }
-        // merge: conserva los parámetros que escribe la automatización (referencia, brechas, etc.)
         await setDoc(doc(db, coleccionDestino, "tasas"), datosPublicar, { merge: true });
         alert(`✅ Nube Sincronizada Exitosamente. [Entorno: ${coleccionDestino}]`);
     } catch (e) { 
