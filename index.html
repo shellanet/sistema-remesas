@@ -458,7 +458,10 @@ window.solicitarCambio = function(){
     const tasa = document.getElementById('tasa-display').innerText;
     const valorSolesReal = document.getElementById('pago-soles-display').innerText;
 
-    let extra = (monedaSeleccionada === "USD") ? `\n💵 *Precio Venta:* S/ ${tasaCambistaReal.toFixed(2)}\n💳 *Valor en Soles:* ${valorSolesReal}\n` : "";
+    let extra = (monedaSeleccionada === "USD") ? `
+💵 *Precio Venta:* S/ ${tasaCambistaReal.toFixed(2)}
+💳 *Valor en Soles:* ${valorSolesReal}
+` : "";
 
     const txt = `*💎 GLOBAL-FLOW - SOLICITUD DE CAMBIO*
 🌟 *Nivel:* ${nivelActual}
@@ -572,13 +575,20 @@ window.solicitarCambio = function(){
     }
 
     function textoCompartir(d){
-        let t = '💎 *GLOBAL-FLOW*\n';
-        if(d.nivel) t += '🌟 Nivel: ' + d.nivel + '\n';
-        t += '💵 Envías: ' + d.simbolo + ' ' + d.montoTxt + '\n';
-        t += '📊 Tasa (' + d.tipo + '): ' + d.tasa + ' Bs\n';
-        t += '💰 *Recibes en Venezuela: ' + d.bs + ' Bs*\n';
-        t += '🕒 ' + d.fecha + '\n';
-        if(location.protocol.indexOf('http') === 0){ t += '\nCotiza tú también: ' + location.href.split('#')[0]; }
+        let t = '💎 *GLOBAL-FLOW*
+';
+        if(d.nivel) t += '🌟 Nivel: ' + d.nivel + '
+';
+        t += '💵 Envías: ' + d.simbolo + ' ' + d.montoTxt + '
+';
+        t += '📊 Tasa (' + d.tipo + '): ' + d.tasa + ' Bs
+';
+        t += '💰 *Recibes en Venezuela: ' + d.bs + ' Bs*
+';
+        t += '🕒 ' + d.fecha + '
+';
+        if(location.protocol.indexOf('http') === 0){ t += '
+Cotiza tú también: ' + location.href.split('#')[0]; }
         return t;
     }
 
@@ -624,99 +634,3 @@ window.solicitarCambio = function(){
         const grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;';
 
-        if(puedeCompartirArchivo){
-            const b = document.createElement('button');
-            b.textContent = '📤 Compartir imagen';
-            b.style.cssText = estiloBtn('#1cd06b', '#0f141e') + 'grid-column:1 / -1;';
-            b.onclick = async () => {
-                try { await navigator.share({ files: [file], title: 'Global-Flow', text: texto }); }
-                catch(e){ if(e.name !== 'AbortError') toast('No se pudo abrir el menú de compartir'); }
-            };
-            grid.appendChild(b);
-        }
-
-        const wa = document.createElement('button');
-        wa.textContent = '💬 WhatsApp (texto)';
-        wa.style.cssText = estiloBtn('#25d366', '#0f141e');
-        wa.onclick = () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank'); };
-        grid.appendChild(wa);
-
-        const dl = document.createElement('button');
-        dl.textContent = '⬇️ Descargar';
-        dl.style.cssText = estiloBtn('#2563eb', '#ffffff');
-        dl.onclick = () => {
-            const a = document.createElement('a');
-            a.href = urlActual;
-            a.download = 'global-flow-tasa.png';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        };
-        grid.appendChild(dl);
-
-        if(puedeCopiar){
-            const cp = document.createElement('button');
-            cp.textContent = '📋 Copiar imagen';
-            cp.style.cssText = estiloBtn('#374151', '#ffffff') + 'grid-column:1 / -1;';
-            cp.onclick = async () => {
-                try {
-                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    toast('Imagen copiada. Pégala en tu chat o red social.');
-                } catch(e){ toast('No se pudo copiar la imagen'); }
-            };
-            grid.appendChild(cp);
-        }
-
-        const nota = document.createElement('p');
-        nota.style.cssText = 'font-size:10px;color:#6b7280;text-align:center;margin-top:10px;line-height:1.4;';
-        nota.textContent = puedeCompartirArchivo
-            ? 'Con «Compartir imagen» elige WhatsApp, Instagram, Facebook, Telegram u otra app.'
-            : 'Descarga o copia la imagen y adjúntala en tu red social. El botón de WhatsApp envía solo el texto.';
-
-        panel.appendChild(head);
-        panel.appendChild(img);
-        panel.appendChild(grid);
-        panel.appendChild(nota);
-        ov.appendChild(panel);
-        document.body.appendChild(ov);
-    }
-
-    window.capturarTasa = async function(){
-        const d = datosActuales();
-        if(!(d.monto > 0)){ toast('Ingresa un monto para generar la captura'); return; }
-        if(typeof html2canvas === 'undefined'){ toast('No se pudo cargar el generador de capturas. Revisa tu conexión.'); return; }
-
-        const btn = $('btn-captura');
-        const original = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Generando...';
-        try{
-            const card = crearTarjeta();
-            llenarTarjeta(card, d);
-            if(document.fonts && document.fonts.ready){ await document.fonts.ready; }
-            const canvas = await html2canvas(card, {
-                backgroundColor: '#0f141e',
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                onclone: (doc) => {
-                    const c = doc.getElementById('share-card');
-                    if(c){ c.style.left = '0'; c.style.top = '0'; }
-                }
-            });
-            const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
-            if(!blob) throw new Error('No se generó la imagen');
-            mostrarModal(blob, textoCompartir(d));
-        } catch(e){
-            console.error(e);
-            toast('No se pudo generar la captura. Intenta de nuevo.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = original;
-        }
-    };
-})();
-</script>
-
-</body>
-</html>
