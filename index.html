@@ -458,10 +458,7 @@ window.solicitarCambio = function(){
     const tasa = document.getElementById('tasa-display').innerText;
     const valorSolesReal = document.getElementById('pago-soles-display').innerText;
 
-    let extra = (monedaSeleccionada === "USD") ? `
-💵 *Precio Venta:* S/ ${tasaCambistaReal.toFixed(2)}
-💳 *Valor en Soles:* ${valorSolesReal}
-` : "";
+    let extra = (monedaSeleccionada === "USD") ? `\n💵 *Precio Venta:* S/ ${tasaCambistaReal.toFixed(2)}\n💳 *Valor en Soles:* ${valorSolesReal}\n` : "";
 
     const txt = `*💎 GLOBAL-FLOW - SOLICITUD DE CAMBIO*
 🌟 *Nivel:* ${nivelActual}
@@ -515,33 +512,33 @@ window.solicitarCambio = function(){
         if(tarjeta) return tarjeta;
         tarjeta = document.createElement('div');
         tarjeta.id = 'share-card';
-        tarjeta.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;padding:26px 22px;box-sizing:border-box;background:#0f141e;color:#f3f4f6;font-family:Inter,Arial,sans-serif;';
+        tarjeta.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;padding:28px 24px;box-sizing:border-box;background:#0f141e;color:#f3f4f6;font-family:Inter,Arial,sans-serif;text-align:center;';
         tarjeta.innerHTML = `
-            <div style="text-align:center;margin-bottom:14px;">
-                <div style="font-size:20px;font-weight:900;font-style:italic;letter-spacing:.14em;text-transform:uppercase;">✨ <span style="color:#3b82f6;">Global-Flow</span> ✨</div>
-                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Tasa inteligente de envío a Venezuela</div>
+            <div style="margin-bottom:16px;">
+                <div style="font-size:21px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;line-height:1.2;">✨ <span style="color:#3b82f6;">Global-Flow</span> ✨</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:5px;line-height:1.3;">Tasa inteligente de envío a Venezuela</div>
             </div>
-            <div style="text-align:center;margin-bottom:14px;">
-                <span data-f="nivel" style="display:none;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;"></span>
-                <div data-f="tasa" style="font-size:56px;line-height:1.05;font-weight:900;font-style:italic;letter-spacing:-.03em;margin-top:8px;">0.00</div>
-                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Tasa · <span data-f="tipo"></span></div>
+            <div style="margin-bottom:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <span data-f="nivel" style="display:none;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;line-height:1;"></span>
+                <div data-f="tasa" style="font-size:56px;line-height:1.1;font-weight:900;letter-spacing:-.02em;margin:0 auto;">0.00</div>
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:6px;line-height:1.2;">Tasa · <span data-f="tipo"></span></div>
             </div>
-            <div style="background:#111620;border-radius:18px;padding:14px 16px;margin-bottom:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;">Envías</span>
-                    <span data-f="envio" style="font-size:20px;font-weight:900;"></span>
+            <div data-f="bloqueMonto" style="background:#111620;border:1px solid #1f2937;border-radius:18px;padding:14px 18px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;line-height:1.2;">
+                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;letter-spacing:.05em;">Envías</span>
+                    <span data-f="envio" style="font-size:20px;font-weight:900;color:#ffffff;"></span>
                 </div>
-                <div data-f="solesRow" style="display:none;justify-content:space-between;align-items:center;margin-top:8px;">
-                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;">Valor en soles</span>
+                <div data-f="solesRow" style="display:none;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid #1f2937;line-height:1.2;">
+                    <span style="font-size:11px;color:#9ca3af;font-weight:800;text-transform:uppercase;letter-spacing:.05em;">Valor en soles</span>
                     <span data-f="soles" style="font-size:16px;font-weight:900;color:#fbbf24;"></span>
                 </div>
             </div>
-            <div style="background:linear-gradient(135deg,rgba(28,208,107,.14),rgba(59,130,246,.08));border:1px solid rgba(28,208,107,.45);border-radius:18px;padding:16px;text-align:center;">
-                <div style="font-size:12px;color:#1cd06b;font-weight:900;text-transform:uppercase;letter-spacing:.06em;">Recibes en Venezuela</div>
-                <div style="font-size:40px;line-height:1.1;font-weight:900;letter-spacing:-.03em;margin-top:6px;"><span data-f="bs"></span> <span style="font-size:18px;color:#9ca3af;font-style:italic;font-weight:700;">Bs</span></div>
+            <div data-f="bloqueRecibe" style="background:linear-gradient(135deg,rgba(28,208,107,.14),rgba(59,130,246,.08));border:1px solid rgba(28,208,107,.45);border-radius:18px;padding:18px 16px;text-align:center;">
+                <div style="font-size:12px;color:#1cd06b;font-weight:900;text-transform:uppercase;letter-spacing:.06em;line-height:1.2;">Recibes en Venezuela</div>
+                <div style="font-size:38px;line-height:1.15;font-weight:900;letter-spacing:-.02em;margin-top:8px;color:#ffffff;"><span data-f="bs"></span> <span style="font-size:18px;color:#9ca3af;font-weight:700;">Bs</span></div>
             </div>
-            <div style="text-align:center;margin-top:14px;font-size:10px;color:#6b7280;">
-                <div data-f="fecha"></div>
+            <div style="text-align:center;margin-top:16px;font-size:10px;color:#6b7280;line-height:1.4;">
+                <div data-f="fecha" style="font-weight:700;color:#9ca3af;"></div>
                 <div style="margin-top:2px;">Tasa sujeta a variación del mercado</div>
             </div>`;
         document.body.appendChild(tarjeta);
@@ -557,8 +554,12 @@ window.solicitarCambio = function(){
         set('bs', d.bs);
         set('fecha', d.fecha);
 
+        const conMonto = d.monto > 0;
+        card.querySelector('[data-f="bloqueMonto"]').style.display = conMonto ? 'block' : 'none';
+        card.querySelector('[data-f="bloqueRecibe"]').style.display = conMonto ? 'block' : 'none';
+
         const nv = card.querySelector('[data-f="nivel"]');
-        if(d.nivel){
+        if(conMonto && d.nivel){
             nv.style.display = 'inline-block';
             nv.textContent = d.nivel;
             const n = d.nivel.toUpperCase();
@@ -570,25 +571,22 @@ window.solicitarCambio = function(){
         }
 
         const sr = card.querySelector('[data-f="solesRow"]');
-        if(d.soles){ sr.style.display = 'flex'; set('soles', d.soles); }
+        if(conMonto && d.soles){ sr.style.display = 'flex'; set('soles', d.soles); }
         else { sr.style.display = 'none'; }
     }
 
     function textoCompartir(d){
-        let t = '💎 *GLOBAL-FLOW*
-';
-        if(d.nivel) t += '🌟 Nivel: ' + d.nivel + '
-';
-        t += '💵 Envías: ' + d.simbolo + ' ' + d.montoTxt + '
-';
-        t += '📊 Tasa (' + d.tipo + '): ' + d.tasa + ' Bs
-';
-        t += '💰 *Recibes en Venezuela: ' + d.bs + ' Bs*
-';
-        t += '🕒 ' + d.fecha + '
-';
-        if(location.protocol.indexOf('http') === 0){ t += '
-Cotiza tú también: ' + location.href.split('#')[0]; }
+        let t = '💎 *GLOBAL-FLOW*\n';
+        if(d.monto > 0){
+            if(d.nivel) t += '🌟 Nivel: ' + d.nivel + '\n';
+            t += '💵 Envías: ' + d.simbolo + ' ' + d.montoTxt + '\n';
+            t += '📊 Tasa (' + d.tipo + '): ' + d.tasa + ' Bs\n';
+            t += '💰 *Recibes en Venezuela: ' + d.bs + ' Bs*\n';
+        } else {
+            t += '📊 *Tasa del día (' + d.tipo + '): ' + d.tasa + ' Bs*\n';
+        }
+        t += '🕒 ' + d.fecha + '\n';
+        if(location.protocol.indexOf('http') === 0){ t += '\nCotiza tú también: ' + location.href.split('#')[0]; }
         return t;
     }
 
@@ -634,3 +632,147 @@ Cotiza tú también: ' + location.href.split('#')[0]; }
         const grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;';
 
+        // --- INICIO: BOTÓN DIRECTO A TELEGRAM ---
+        const tgBtn = document.createElement('button');
+        tgBtn.textContent = '✈️ Enviar a mi Telegram';
+        tgBtn.style.cssText = estiloBtn('#0088cc', '#ffffff') + 'grid-column:1 / -1; margin-bottom: 4px;';
+        tgBtn.onclick = async () => {
+            let token = localStorage.getItem('globalflow_tg_token');
+            let chat = localStorage.getItem('globalflow_tg_chat') || '5674337957'; 
+            
+            if (!token) {
+                token = prompt('Para enviar capturas, pega aquí el Token de tu Bot de Telegram (solo se pide la primera vez):');
+                if (!token) return;
+                localStorage.setItem('globalflow_tg_token', token.trim());
+            }
+            
+            const originalTxt = tgBtn.textContent;
+            tgBtn.textContent = '⏳ Enviando a Telegram...';
+            tgBtn.disabled = true;
+            
+            const fd = new FormData();
+            fd.append('chat_id', chat);
+            fd.append('photo', file);
+            fd.append('caption', texto);
+            fd.append('parse_mode', 'Markdown');
+            
+            try {
+                const req = await fetch('https://api.telegram.org/bot' + token.trim() + '/sendPhoto', {
+                    method: 'POST',
+                    body: fd
+                });
+                const res = await req.json();
+                if (res.ok) {
+                    toast('✅ ¡Captura enviada a tu Telegram!');
+                } else {
+                    if (res.error_code === 401) localStorage.removeItem('globalflow_tg_token');
+                    toast('❌ Error de Telegram: ' + (res.description || 'Token inválido'));
+                }
+            } catch(e) {
+                toast('❌ Error de red al enviar.');
+            }
+            
+            tgBtn.textContent = originalTxt;
+            tgBtn.disabled = false;
+        };
+        grid.appendChild(tgBtn);
+        // --- FIN: BOTÓN DIRECTO A TELEGRAM ---
+
+        if(puedeCompartirArchivo){
+            const b = document.createElement('button');
+            b.textContent = '📤 Compartir imagen';
+            b.style.cssText = estiloBtn('#1cd06b', '#0f141e') + 'grid-column:1 / -1;';
+            b.onclick = async () => {
+                try { await navigator.share({ files: [file], title: 'Global-Flow', text: texto }); }
+                catch(e){ if(e.name !== 'AbortError') toast('No se pudo abrir el menú de compartir'); }
+            };
+            grid.appendChild(b);
+        }
+
+        const wa = document.createElement('button');
+        wa.textContent = '💬 WhatsApp (texto)';
+        wa.style.cssText = estiloBtn('#25d366', '#0f141e');
+        wa.onclick = () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank'); };
+        grid.appendChild(wa);
+
+        const dl = document.createElement('button');
+        dl.textContent = '⬇️ Descargar';
+        dl.style.cssText = estiloBtn('#2563eb', '#ffffff');
+        dl.onclick = () => {
+            const a = document.createElement('a');
+            a.href = urlActual;
+            a.download = 'global-flow-tasa.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        };
+        grid.appendChild(dl);
+
+        if(puedeCopiar){
+            const cp = document.createElement('button');
+            cp.textContent = '📋 Copiar imagen';
+            cp.style.cssText = estiloBtn('#374151', '#ffffff') + 'grid-column:1 / -1;';
+            cp.onclick = async () => {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    toast('Imagen copiada. Pégala en tu chat o red social.');
+                } catch(e){ toast('No se pudo copiar la imagen'); }
+            };
+            grid.appendChild(cp);
+        }
+
+        const nota = document.createElement('p');
+        nota.style.cssText = 'font-size:10px;color:#6b7280;text-align:center;margin-top:10px;line-height:1.4;';
+        nota.textContent = puedeCompartirArchivo
+            ? 'Con «Compartir imagen» elige WhatsApp, Instagram, Facebook, Telegram u otra app.'
+            : 'Descarga o copia la imagen y adjúntala en tu red social. El botón de WhatsApp envía solo el texto.';
+
+        panel.appendChild(head);
+        panel.appendChild(img);
+        panel.appendChild(grid);
+        panel.appendChild(nota);
+        ov.appendChild(panel);
+        document.body.appendChild(ov);
+    }
+
+    window.capturarTasa = async function(){
+        const d = datosActuales();
+        if(typeof html2canvas === 'undefined'){ toast('No se pudo cargar el generador de capturas. Revisa tu conexión.'); return; }
+
+        const btn = $('btn-captura');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Generando...';
+        try{
+            const card = crearTarjeta();
+            llenarTarjeta(card, d);
+            if(document.fonts && document.fonts.ready){ await document.fonts.ready; }
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const canvas = await html2canvas(card, {
+                backgroundColor: '#0f141e',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                onclone: (doc) => {
+                    const c = doc.getElementById('share-card');
+                    if(c){ c.style.left = '0'; c.style.top = '0'; }
+                }
+            });
+            const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+            if(!blob) throw new Error('No se generó la imagen');
+            mostrarModal(blob, textoCompartir(d));
+        } catch(e){
+            console.error(e);
+            toast('No se pudo generar la captura. Intenta de nuevo.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    };
+})();
+</script>
+
+</body>
+</html>
