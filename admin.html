@@ -279,6 +279,7 @@ let unsubscribe = escudharDocumento("configuracion");
 
 let INTERVALO_SYNC = 0; 
 let tiempoRestante = INTERVALO_SYNC;
+let modoLecturaNube = false;
 
 window.usuarioCalculando = function() {
     const activo = document.activeElement;
@@ -293,6 +294,12 @@ window.toggleModoBot = async function() {
     try {
         await setDoc(doc(db, coleccionDestino, "tasas"), { ref_activa: nuevoEstado }, { merge: true });
         
+        // Al pasar de Modo Auto a Modo Manual, precargamos los datos actuales de la nube para editar encima
+        if (!nuevoEstado) {
+            datosFirebase.ref_activa = false;
+            window.cargarDesdeBD('pen');
+        }
+
         const mensajeTexto = nuevoEstado 
             ? `💻 ADMIN: ✅ MODO AUTO encendido en [${coleccionDestino}]. Analizando a Sauki...` 
             : `💻 ADMIN: 🛑 MODO MANUAL activado en [${coleccionDestino}]. Cajas desbloqueadas para ajuste manual.`;
@@ -315,6 +322,10 @@ setInterval(() => {
     contadorEstado = (contadorEstado + 1) % 30;
     if (contadorEstado === 0) aplicarMargenesEfectivos();
     const timerElem = document.getElementById('timer-sync');
+    if (modoLecturaNube) {
+        if (timerElem) timerElem.innerText = 'Auto: Nube (Pausado)';
+        return;
+    }
     if (!(INTERVALO_SYNC > 0)) {
         if (timerElem) timerElem.innerText = 'Auto: pausado';
         return;
@@ -353,7 +364,19 @@ function cargarParametrosDesdeBD() {
             if(document.activeElement !== document.getElementById(id)) document.getElementById(id).value = v;
         }
     });
-    aplicarIntervalo();
+
+    if (datosFirebase.ref_activa === true) {
+        Object.keys(CAJAS_MARGEN).forEach(id => {
+            const valEfectivo = parseFloat(datosFirebase[CAJAS_MARGEN[id][0]]);
+            if (isFinite(valEfectivo) && document.activeElement !== document.getElementById(id)) {
+                document.getElementById(id).value = valEfectivo.toFixed(2);
+            }
+        });
+    }
+
+    if (!modoLecturaNube) {
+        aplicarIntervalo();
+    }
 }
 
 function automatizacionViva() {
@@ -381,27 +404,25 @@ function liberarCajasMargen() {
 }
 
 function aplicarMargenesEfectivos() {
-    // AHORA EL BLOQUEO DEPENDE ESTRICTAMENTE DE SI ref_activa ES TRUE. NO IMPORTA SI AUN NO EXISTEN LOS DATOS EFECTIVOS.
     if (datosFirebase.ref_activa === true) {
-        // Bloquear Cajas de márgenes
         Object.keys(CAJAS_MARGEN).forEach(id => {
             const caja = document.getElementById(id);
             const valEfectivo = parseFloat(datosFirebase[CAJAS_MARGEN[id][0]]);
-            if(isFinite(valEfectivo) && document.activeElement !== caja) {
-                caja.value = valEfectivo.toFixed(2);
+            const valBase = parseFloat(datosFirebase[CAJAS_MARGEN[id][1]]);
+            const valorMostrar = isFinite(valEfectivo) ? valEfectivo : valBase;
+            if (isFinite(valorMostrar) && document.activeElement !== caja) {
+                caja.value = valorMostrar.toFixed(2);
             }
             caja.readOnly = true;
             caja.classList.add('opacity-60');
         });
         
-        // Bloquear botón de publicar
         document.getElementById('cobertor-publicar').classList.remove('hidden');
         document.getElementById('cobertor-publicar').classList.add('flex');
         
         mostrandoEfectivos = true;
         if(!window.usuarioCalculando()) window.calcularTodo('pen');
     } else {
-        // MODO MANUAL: Liberar Cajas y Botón
         if (mostrandoEfectivos || document.getElementById('margen-mini').readOnly) {
             liberarCajasMargen();
             Object.keys(CAJAS_MARGEN).forEach(id => {
@@ -414,7 +435,6 @@ function aplicarMargenesEfectivos() {
             if(!window.usuarioCalculando()) window.calcularTodo('pen');
         }
         
-        // Desbloquear botón de publicar
         document.getElementById('cobertor-publicar').classList.remove('flex');
         document.getElementById('cobertor-publicar').classList.add('hidden');
     }
@@ -427,6 +447,7 @@ function aplicarIntervalo() {
 }
 
 window.parametroOperacionCambiado = function() {
+    modoLecturaNube = false;
     aplicarIntervalo();
     actualizarAvisoOperacion();
     window.calcularTodo('pen');
@@ -521,9 +542,21 @@ function escudharDocumento(coleccion) {
             document.getElementById('nube-ves').innerText = "🇻🇪 " + (!isNaN(v) ? v.toFixed(2) : "0.00");
             let b = parseFloat(datosFirebase.bcv_ref);
             document.getElementById('nube-bcv').innerText = "🇻🇪 BCV " + (!isNaN(b) ? b.toFixed(2) : "0.00");
+
+            // Si está en Modo Auto y el usuario no está escribiendo, sincronizar tasas de la nube en tiempo real
+            if (datosFirebase.ref_activa === true && !window.usuarioCalculando()) {
+                if (datosFirebase.pen_ref) document.getElementById('tasa-pen-usdt').value = datosFirebase.pen_ref;
+                if (datosFirebase.ves_ref) document.getElementById('tasa-usdt-ves').value = datosFirebase.ves_ref;
+                if (datosFirebase.bcv_ref) document.getElementById('tasa-bcv-ves').value = datosFirebase.bcv_ref;
+                if (datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
+            }
             
             if (!parametrosCargados) {
                 parametrosCargados = true;
+                if (datosFirebase.pen_ref) document.getElementById('tasa-pen-usdt').value = datosFirebase.pen_ref;
+                if (datosFirebase.ves_ref) document.getElementById('tasa-usdt-ves').value = datosFirebase.ves_ref;
+                if (datosFirebase.bcv_ref) document.getElementById('tasa-bcv-ves').value = datosFirebase.bcv_ref;
+                if (datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
                 cargarParametrosDesdeBD();
                 if(!window.usuarioCalculando()) window.calcularTodo('pen');
             }
@@ -547,6 +580,7 @@ window.toggleModoDemo = function() {
         texto.className = "text-white font-bold";
     }
     parametrosCargados = false;
+    modoLecturaNube = false;
     liberarCajasMargen();
     mostrandoEfectivos = false;
     datosFirebase = {};
@@ -558,12 +592,20 @@ window.toggleModoDemo = function() {
 window.cargarDesdeBD = function(origen = 'pen') {
     if (Object.keys(datosFirebase).length === 0) return alert("Aún no hay datos guardados en la BD o error de red.");
     
+    // Pausa el auto-sync local para que Binance no pise los datos de la nube mientras simulas o editas
+    modoLecturaNube = true;
+    INTERVALO_SYNC = 0;
+    tiempoRestante = 0;
+    const timerElem = document.getElementById('timer-sync');
+    if (timerElem) timerElem.innerText = 'Auto: Nube (Pausado)';
+
     if(datosFirebase.pen_ref) document.getElementById('tasa-pen-usdt').value = datosFirebase.pen_ref;
     if(datosFirebase.ves_ref) document.getElementById('tasa-usdt-ves').value = datosFirebase.ves_ref;
     if(datosFirebase.bcv_ref) document.getElementById('tasa-bcv-ves').value = datosFirebase.bcv_ref;
     if(datosFirebase.tasa_cambista) document.getElementById('input-usd-pen-tasa').value = datosFirebase.tasa_cambista;
     
     cargarParametrosDesdeBD();
+    aplicarMargenesEfectivos();
     window.calcularTodo(origen);
 };
 
@@ -594,7 +636,9 @@ window.limpiarTodo = function() {
 };
 
 window.fetchTasas = async function() {
-    tiempoRestante = INTERVALO_SYNC;
+    // Al pulsar Sync API manualmente, se reactiva el ciclo normal
+    modoLecturaNube = false;
+    aplicarIntervalo();
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "⏳...";
     try {
@@ -660,14 +704,17 @@ function calcularTasaYMargen(usdMonto, origen) {
     
     let margenPct = isFinite(P.mStd) ? P.mStd : 0;
     let nivel = "ESTÁNDAR"; let clase = "bg-blue-600"; let glow = "glow-std";
+    let tasaNubeNivel = parseFloat(datosFirebase.tasa_p2p_std);
 
     if (usdMonto > 0) {
         if (P.limMiniSoles > 0 && solesEq < P.limMiniSoles) {
             nivel = "MINI"; clase = "bg-gray-600"; glow = "glow-mini";
             margenPct = isFinite(P.mMini) ? P.mMini : 0;
+            tasaNubeNivel = parseFloat(datosFirebase.tasa_p2p_mini);
         } else if (P.limVipSoles > 0 && solesEq >= P.limVipSoles) {
             nivel = "VIP"; clase = "bg-[#1cd06b] text-[#0f141e]"; glow = "glow-vip";
             margenPct = isFinite(P.mVip) ? P.mVip : 0;
+            tasaNubeNivel = parseFloat(datosFirebase.tasa_p2p_vip);
         }
     }
 
@@ -679,7 +726,21 @@ function calcularTasaYMargen(usdMonto, origen) {
         }
     }
     
-    const tasaFinal = tasaCostoReal * (1 - (margenPct / 100));
+    let tasaFinal;
+    // En Modo Auto (y cuando no se fuerza margen manual), usar la tasa exacta publicada en la nube por nivel
+    // para que coincida 100% con el Index (tanto si sigue a Sauki como si se refugia en Binance)
+    if (datosFirebase.ref_activa === true && origen !== 'margen_manual' && isFinite(tasaNubeNivel) && tasaNubeNivel > 0) {
+        tasaFinal = tasaNubeNivel;
+        if (tasaCostoReal > 0) {
+            margenPct = (1 - (tasaFinal / tasaCostoReal)) * 100;
+            if (document.activeElement !== document.getElementById('indicador-margen')) {
+                document.getElementById('indicador-margen').value = margenPct.toFixed(2);
+            }
+        }
+    } else {
+        tasaFinal = parseFloat((tasaCostoReal * (1 - (margenPct / 100))).toFixed(2));
+    }
+
     return { tasa: tasaFinal, tasaCosto: tasaCostoReal, margen: margenPct, nivel, clase, glow };
 }
 
